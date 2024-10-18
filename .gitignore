@@ -1,8 +1,67 @@
-.DS_Store
-/.build
-/Packages
-xcuserdata/
+# Build artifacts and intermediate files
+.build/
+.swiftpm/
 DerivedData/
-.swiftpm/configuration/registries.json
-.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
-.netrc
+*.llbuild/
+*.swiftsourceinfo
+
+# Package resolution file
+Package.resolved
+
+# Xcode project files (if generated)
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+
+# User-specific files and macOS metadata
+.DS_Store
+*.swp
+*.lock
+*~
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Generated files
+*.orig
+
+# SwiftPM binary artifacts
+.artifacts/
+
+# IDEs and text editor files
+.idea/
+.vscode/
+*.iml
+
+# Carthage dependencies
+Carthage/Build/
+Carthage/Checkouts/
+
+# CocoaPods dependencies
+Pods/
+
+# SPM Packages (if any)
+Packages/
+
+# Fastlane artifacts
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Code coverage
+*.xcresult
+*.profraw
+
+# Playgrounds
+playgrounds/
+
+# SwiftLint cache
+.swiftlint.yml
+.swiftlint-cache

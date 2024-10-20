@@ -77,6 +77,30 @@ public struct OpenRouterRequest: Codable, Sendable {
              repetitionPenalty = "repetition_penalty", seed, tools, toolChoice = "tool_choice",
              logitBias = "logit_bias", transforms, models, route, provider
     }
+    
+    public init(messages: [Message]? = nil, prompt: String? = nil, model: String? = nil, responseFormat: ResponseFormat? = nil, stop: [String]? = nil, stream: Bool? = nil, maxTokens: Int? = nil, temperature: Float? = nil, topP: Float? = nil, topK: Int? = nil, frequencyPenalty: Float? = nil, presencePenalty: Float? = nil, repetitionPenalty: Float? = nil, seed: Int? = nil, tools: [Tool]? = nil, toolChoice: ToolChoice? = nil, logitBias: [Int : Float]? = nil, transforms: [String]? = nil, models: [String]? = nil, route: String? = nil, provider: ProviderPreferences? = nil) {
+        self.messages = messages
+        self.prompt = prompt
+        self.model = model
+        self.responseFormat = responseFormat
+        self.stop = stop
+        self.stream = stream
+        self.maxTokens = maxTokens
+        self.temperature = temperature
+        self.topP = topP
+        self.topK = topK
+        self.frequencyPenalty = frequencyPenalty
+        self.presencePenalty = presencePenalty
+        self.repetitionPenalty = repetitionPenalty
+        self.seed = seed
+        self.tools = tools
+        self.toolChoice = toolChoice
+        self.logitBias = logitBias
+        self.transforms = transforms
+        self.models = models
+        self.route = route
+        self.provider = provider
+    }
 }
 
 /// Represents a message within the OpenRouter request.
@@ -93,6 +117,12 @@ public struct Message: Codable, Sendable {
     /// The role enum representing the sender's role.
     public enum Role: String, Codable, Sendable {
         case user, assistant, system, tool
+    }
+    
+    public init(role: Role, content: StringOrContentPart, name: String? = nil) {
+        self.role = role
+        self.content = content
+        self.name = name
     }
 }
 

@@ -272,7 +272,11 @@ public struct ResponseFormat: Codable, Sendable {
 
 /// Represents provider preferences in the OpenRouter request.
 public struct ProviderPreferences: Codable, Sendable {
-    // Define properties based on the documentation
+    public let order: [String]
+    
+    public init(order: [String]) {
+        self.order = order
+    }
 }
 
 /// Example of how to create an instance of the request.

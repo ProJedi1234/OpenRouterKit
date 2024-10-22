@@ -5,7 +5,6 @@
 //  Created by Aditya Dhar on 10/11/24.
 //
 
-
 import Foundation
 
 // Define the OpenRouterClient
@@ -44,11 +43,23 @@ public final class OpenRouterClient: Sendable {
         
         // Make the network call
         let (data, response) = try await session.data(for: urlRequest)
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+        guard let httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
-        let decodedResponse = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
-        return decodedResponse
+        
+        // Handle errors based on HTTP status code
+        if httpResponse.statusCode != 200 {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
+        }
+        
+        do {
+            let decodedResponse = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
+            return decodedResponse
+        } catch {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode, errorResponse: errorResponse)
+        }
     }
     
     @available(iOS 15.0, *)
@@ -73,7 +84,20 @@ public final class OpenRouterClient: Sendable {
                     let jsonData = try JSONEncoder().encode(request)
                     urlRequest.httpBody = jsonData
                     
-                    let (bytes, _) = try await URLSession.shared.bytes(for: urlRequest)
+                    let (bytes, response) = try await URLSession.shared.bytes(for: urlRequest)
+                    guard let httpResponse = response as? HTTPURLResponse else {
+                        throw URLError(.badServerResponse)
+                    }
+                    
+                    // Handle errors based on HTTP status code
+                    if httpResponse.statusCode != 200 {
+                        var collectedData = Data()
+                        for try await byte in bytes {
+                            collectedData.append(byte)
+                        }
+                        let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: collectedData)
+                        throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
+                    }
                     
                     var buffer = ""
                     for try await byte in bytes {
@@ -109,5 +133,83 @@ public final class OpenRouterClient: Sendable {
               !content.isEmpty else { return nil }
 
         return content
+    }
+}
+
+// Define the ErrorResponse type
+struct ErrorResponse: Decodable {
+    struct ErrorDetail: Decodable {
+        let code: Int
+        let message: String
+        let metadata: [String: String]?
+    }
+    let error: ErrorDetail
+}
+
+// Define the OpenRouterError struct
+public struct OpenRouterError: Error {
+    public let type: ErrorType
+    public let message: String
+    public let metadata: [String: String]?
+    
+    public enum ErrorType: Sendable {
+        case badRequest
+        case invalidCredentials
+        case insufficientCredits
+        case moderationError
+        case requestTimeout
+        case rateLimited
+        case modelDown
+        case noAvailableProvider
+        case unknownError(Int)
+    }
+
+    init(httpStatusCode: Int, errorResponse: ErrorResponse?) {
+        self.message = errorResponse?.error.message ?? "Unknown error occurred"
+        self.metadata = errorResponse?.error.metadata
+
+        switch httpStatusCode {
+        case 400:
+            self.type = .badRequest
+        case 401:
+            self.type = .invalidCredentials
+        case 402:
+            self.type = .insufficientCredits
+        case 403:
+            self.type = .moderationError
+        case 408:
+            self.type = .requestTimeout
+        case 429:
+            self.type = .rateLimited
+        case 502:
+            self.type = .modelDown
+        case 503:
+            self.type = .noAvailableProvider
+        default:
+            self.type = .unknownError(httpStatusCode)
+        }
+    }
+
+    var localizedDescription: String {
+        switch type {
+        case .badRequest:
+            return "Bad Request: \(message)"
+        case .invalidCredentials:
+            return "Invalid Credentials: \(message)"
+        case .insufficientCredits:
+            return "Insufficient Credits: \(message)"
+        case .moderationError:
+            return "Moderation Error: \(message)"
+        case .requestTimeout:
+            return "Request Timeout: \(message)"
+        case .rateLimited:
+            return "Rate Limited: \(message)"
+        case .modelDown:
+            return "Model Down: \(message)"
+        case .noAvailableProvider:
+            return "No Available Provider: \(message)"
+        case .unknownError(let code):
+            return "Unknown Error (\(code)): \(message)"
+        }
     }
 }

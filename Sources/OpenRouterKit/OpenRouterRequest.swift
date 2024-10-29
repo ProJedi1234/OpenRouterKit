@@ -268,6 +268,10 @@ public enum ToolChoice: Codable, Sendable {
 public struct ResponseFormat: Codable, Sendable {
     /// The type of the response format.
     public let type: String
+    
+    public init(type: String) {
+        self.type = type
+    }
 }
 
 /// Represents provider preferences in the OpenRouter request.

@@ -7,6 +7,10 @@
 
 import Foundation
 
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
 // Define the OpenRouterClient
 public final class OpenRouterClient: Sendable {
     private let apiKey: String

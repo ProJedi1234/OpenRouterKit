@@ -88,30 +88,23 @@ public final class OpenRouterClient: Sendable {
                     let jsonData = try JSONEncoder().encode(request)
                     urlRequest.httpBody = jsonData
                     
-                    let (bytes, response) = try await URLSession.shared.bytes(for: urlRequest)
+                    // Use data(for:) instead of bytes(for:)
+                    let (data, response) = try await session.data(for: urlRequest)
                     guard let httpResponse = response as? HTTPURLResponse else {
                         throw URLError(.badServerResponse)
                     }
                     
-                    // Handle errors based on HTTP status code
                     if httpResponse.statusCode != 200 {
-                        var collectedData = Data()
-                        for try await byte in bytes {
-                            collectedData.append(byte)
-                        }
-                        let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: collectedData)
+                        let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
                         throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
                     }
                     
-                    var buffer = ""
-                    for try await byte in bytes {
-                        if let char = String(bytes: [byte], encoding: .utf8) {
-                            buffer += char
-                            if char == "\n" {
-                                if !buffer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, let line = processLine(buffer) {
-                                    continuation.yield(line)
-                                }
-                                buffer = ""
+                    // Process the data as a string and split by newlines
+                    if let responseString = String(data: data, encoding: .utf8) {
+                        let lines = responseString.components(separatedBy: "\n")
+                        for line in lines {
+                            if let processedLine = processLine(line) {
+                                continuation.yield(processedLine)
                             }
                         }
                     }

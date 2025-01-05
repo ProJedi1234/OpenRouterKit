@@ -88,23 +88,28 @@ public final class OpenRouterClient: Sendable {
                     let jsonData = try JSONEncoder().encode(request)
                     urlRequest.httpBody = jsonData
                     
-                    // Use data(for:) instead of bytes(for:)
-                    let (data, response) = try await session.data(for: urlRequest)
+                    let (bytes, response) = try await session.bytes(for: urlRequest)
                     guard let httpResponse = response as? HTTPURLResponse else {
                         throw URLError(.badServerResponse)
                     }
                     
                     if httpResponse.statusCode != 200 {
-                        let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+                        let errorData = try await bytes.reduce(into: Data()) { data, byte in
+                            data.append(byte)
+                        }
+                        let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: errorData)
                         throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
                     }
                     
-                    // Process the data as a string and split by newlines
-                    if let responseString = String(data: data, encoding: .utf8) {
-                        let lines = responseString.components(separatedBy: "\n")
-                        for line in lines {
-                            if let processedLine = processLine(line) {
-                                continuation.yield(processedLine)
+                    var buffer = ""
+                    for try await byte in bytes {
+                        if let char = String(bytes: [byte], encoding: .utf8) {
+                            buffer += char
+                            if char == "\n" {
+                                if let processedLine = processLine(buffer) {
+                                    continuation.yield(processedLine)
+                                }
+                                buffer = ""
                             }
                         }
                     }

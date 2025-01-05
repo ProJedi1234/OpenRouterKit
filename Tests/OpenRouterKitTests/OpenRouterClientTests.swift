@@ -35,19 +35,41 @@ struct OpenRouterClientTests {
     }
     
     @Test func testStreamChatRequest() async throws {
-        let messages = [Message(role: .user, content: .string("Tell me a joke"))]
+        let messages = [Message(role: .user, content: .string("Write me a long paragraph about cats"))]
         
-        var streamedResponse: String = ""
+        var streamedResponse = ""
+        var lastChunkTime = Date()
+        var timesBetweenChunks: [TimeInterval] = []
         
-        // Collect the streamed response
         let request = OpenRouterRequest(messages: messages, model: "meta-llama/llama-3.2-1b-instruct:free", stream: true)
         let stream = client.streamChatRequest(request: request)
+        
         for await text in stream {
+            let now = Date()
+            let timeSinceLastChunk = now.timeIntervalSince(lastChunkTime)
+            timesBetweenChunks.append(timeSinceLastChunk)
+            lastChunkTime = now
+            
             streamedResponse += text
         }
         
-        // Check if we got a non-empty streamed response
-        #expect(!streamedResponse.isEmpty, "Streamed response should not be empty.")
-        print("Streamed Response: \(streamedResponse)")
+        // Remove the first timing since it includes request setup
+        if !timesBetweenChunks.isEmpty {
+            timesBetweenChunks.removeFirst()
+        }
+        
+        // Verify we got a response
+        #expect(!streamedResponse.isEmpty, "Streamed response should not be empty")
+        
+        // Verify we got multiple chunks
+        #expect(timesBetweenChunks.count > 3, "Should receive at least 4 chunks of data")
+        
+        // Verify chunks didn't all arrive simultaneously
+        let averageTimeBetweenChunks = timesBetweenChunks.reduce(0, +) / Double(timesBetweenChunks.count)
+        #expect(averageTimeBetweenChunks > 0.001, "Average time between chunks should be greater than 0.01 seconds")
+        
+        print("Average time between chunks: \(averageTimeBetweenChunks) seconds")
+        print("Number of chunks received: \(timesBetweenChunks.count + 1)")
+        print("Final response length: \(streamedResponse.count) characters")
     }
 }

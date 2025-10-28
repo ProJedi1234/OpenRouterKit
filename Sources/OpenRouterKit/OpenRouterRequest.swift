@@ -69,16 +69,19 @@ public struct OpenRouterRequest: Codable, Sendable {
     
     /// Provider-specific preferences.
     public var provider: ProviderPreferences?
+    
+    /// Reasoning configuration for advanced reasoning capabilities.
+    public var reasoning: ReasoningConfiguration?
 
     enum CodingKeys: String, CodingKey {
         case messages, prompt, model, responseFormat = "response_format", stop, stream,
              maxTokens = "max_tokens", temperature, topP = "top_p", topK = "top_k",
              frequencyPenalty = "frequency_penalty", presencePenalty = "presence_penalty",
              repetitionPenalty = "repetition_penalty", seed, tools, toolChoice = "tool_choice",
-             logitBias = "logit_bias", transforms, models, route, provider
+             logitBias = "logit_bias", transforms, models, route, provider, reasoning
     }
     
-    public init(messages: [Message]? = nil, prompt: String? = nil, model: String? = nil, responseFormat: ResponseFormat? = nil, stop: [String]? = nil, stream: Bool? = nil, maxTokens: Int? = nil, temperature: Float? = nil, topP: Float? = nil, topK: Int? = nil, frequencyPenalty: Float? = nil, presencePenalty: Float? = nil, repetitionPenalty: Float? = nil, seed: Int? = nil, tools: [Tool]? = nil, toolChoice: ToolChoice? = nil, logitBias: [Int : Float]? = nil, transforms: [String]? = nil, models: [String]? = nil, route: String? = nil, provider: ProviderPreferences? = nil) {
+    public init(messages: [Message]? = nil, prompt: String? = nil, model: String? = nil, responseFormat: ResponseFormat? = nil, stop: [String]? = nil, stream: Bool? = nil, maxTokens: Int? = nil, temperature: Float? = nil, topP: Float? = nil, topK: Int? = nil, frequencyPenalty: Float? = nil, presencePenalty: Float? = nil, repetitionPenalty: Float? = nil, seed: Int? = nil, tools: [Tool]? = nil, toolChoice: ToolChoice? = nil, logitBias: [Int : Float]? = nil, transforms: [String]? = nil, models: [String]? = nil, route: String? = nil, provider: ProviderPreferences? = nil, reasoning: ReasoningConfiguration? = nil) {
         self.messages = messages
         self.prompt = prompt
         self.model = model
@@ -100,6 +103,7 @@ public struct OpenRouterRequest: Codable, Sendable {
         self.models = models
         self.route = route
         self.provider = provider
+        self.reasoning = reasoning
     }
 }
 
@@ -281,6 +285,28 @@ public struct ProviderPreferences: Codable, Sendable {
     public init(order: [String]) {
         self.order = order
     }
+}
+
+/// Represents reasoning configuration for advanced reasoning capabilities.
+public struct ReasoningConfiguration: Codable, Sendable {
+    /// The effort level for reasoning.
+    public var effort: ReasoningEffort
+    
+    public init(effort: ReasoningEffort) {
+        self.effort = effort
+    }
+}
+
+/// Represents the effort level for reasoning.
+public enum ReasoningEffort: String, Codable, Sendable {
+    /// Basic reasoning with minimal computational effort.
+    case minimal
+    /// Light reasoning for simple problems.
+    case low
+    /// Balanced reasoning for moderate complexity.
+    case medium
+    /// Deep reasoning for complex problems.
+    case high
 }
 
 /// Example of how to create an instance of the request.

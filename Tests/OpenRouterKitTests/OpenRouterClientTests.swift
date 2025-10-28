@@ -8,6 +8,9 @@
 
 import Testing
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 @testable import OpenRouterKit
 
 @Suite("Client Testing")
@@ -19,7 +22,13 @@ struct OpenRouterClientTests {
             fatalError("API key not found in environment variables")
         }
         
-        client = OpenRouterClient(apiKey: apiKey, siteURL: "www.github.com", siteName: "Swift OpenRouterKit Tests", session: URLSession.shared)
+        #if canImport(FoundationNetworking)
+        let session = URLSession(configuration: .default)
+        #else
+        let session = URLSession.shared
+        #endif
+        
+        client = OpenRouterClient(apiKey: apiKey, siteURL: "www.github.com", siteName: "Swift OpenRouterKit Tests", session: session)
     }
     
     @Test func testChatRequest() async throws {
@@ -27,13 +36,15 @@ struct OpenRouterClientTests {
             .init(role: .user, content: .string("Tell me a joke"))
         ]
         
-        let request = OpenRouterRequest(messages: messages, model: "meta-llama/llama-3.2-1b-instruct:free")
+        let request = OpenRouterRequest(messages: messages, model: "meta-llama/llama-4-scout:free")
         let response = try await client.sendChatRequest(request: request)
         
         #expect(response.choices.count == 1, "Response should contain one choice")
         #expect(!response.choices[0].message.content.isEmpty, "Response should contain a message")
     }
     
+    #if canImport(Darwin)
+    @available(iOS 15.0, macOS 12.0, *)
     @Test func testStreamChatRequest() async throws {
         let messages = [Message(role: .user, content: .string("Write me a long paragraph about cats"))]
         
@@ -41,7 +52,7 @@ struct OpenRouterClientTests {
         var lastChunkTime = Date()
         var timesBetweenChunks: [TimeInterval] = []
         
-        let request = OpenRouterRequest(messages: messages, model: "meta-llama/llama-3.2-1b-instruct:free", stream: true)
+        let request = OpenRouterRequest(messages: messages, model: "meta-llama/llama-4-scout:free", stream: true)
         let stream = client.streamChatRequest(request: request)
         
         for await text in stream {
@@ -72,4 +83,5 @@ struct OpenRouterClientTests {
         print("Number of chunks received: \(timesBetweenChunks.count + 1)")
         print("Final response length: \(streamedResponse.count) characters")
     }
+    #endif
 }

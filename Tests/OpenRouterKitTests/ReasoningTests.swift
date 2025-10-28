@@ -7,6 +7,9 @@
 
 import Testing
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 @testable import OpenRouterKit
 
 @Suite("Reasoning Token Support Tests")
@@ -182,11 +185,17 @@ struct ReasoningIntegrationTests {
             fatalError("API key not found in environment variables")
         }
         
+        #if canImport(FoundationNetworking)
+        let session = URLSession(configuration: .default)
+        #else
+        let session = URLSession.shared
+        #endif
+        
         client = OpenRouterClient(
             apiKey: apiKey,
             siteURL: "www.github.com",
             siteName: "Swift OpenRouterKit Reasoning Tests",
-            session: URLSession.shared
+            session: session
         )
     }
     
@@ -254,6 +263,8 @@ struct ReasoningIntegrationTests {
         }
     }
     
+    #if canImport(Darwin)
+    @available(iOS 15.0, macOS 12.0, *)
     @Test("Stream chat request with reasoning")
     func testStreamChatRequestWithReasoning() async throws {
         let messages = [
@@ -265,8 +276,8 @@ struct ReasoningIntegrationTests {
         let request = OpenRouterRequest(
             messages: messages,
             model: "openai/gpt-oss-20b:free",
-            maxTokens: 1000,
             stream: true,
+            maxTokens: 1000,
             reasoning: ReasoningConfiguration(effort: .medium)
         )
         
@@ -286,6 +297,7 @@ struct ReasoningIntegrationTests {
         print("Final response length: \(streamedResponse.count) characters")
         print("Response: \(streamedResponse)")
     }
+    #endif
     
     @Test("Test all reasoning effort levels")
     func testAllReasoningEffortLevelsAPI() async throws {

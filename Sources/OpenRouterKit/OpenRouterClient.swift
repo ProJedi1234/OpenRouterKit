@@ -66,7 +66,8 @@ public final class OpenRouterClient: Sendable {
         }
     }
     
-    @available(iOS 15.0, *)
+    #if canImport(Darwin)
+    @available(iOS 15.0, macOS 12.0, *)
     public func streamChatRequest(request: OpenRouterRequest) -> AsyncStream<String> {
         return AsyncStream { continuation in
             Task {
@@ -136,6 +137,7 @@ public final class OpenRouterClient: Sendable {
 
         return content
     }
+    #endif
 }
 
 // Define the ErrorResponse type

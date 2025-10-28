@@ -27,5 +27,10 @@ public struct OpenRouterResponse: Codable, Sendable {
         public var prompt_tokens: Int
         public var completion_tokens: Int
         public var total_tokens: Int
+        public var output_tokens_details: OutputTokensDetails?
+        
+        public struct OutputTokensDetails: Codable, Sendable {
+            public var reasoning_tokens: Int?
+        }
     }
 }

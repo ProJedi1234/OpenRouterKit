@@ -32,5 +32,10 @@ public struct StreamingDelta: Codable {
         public var prompt_tokens: Int
         public var completion_tokens: Int
         public var total_tokens: Int
+        public var output_tokens_details: OutputTokensDetails?
+        
+        public struct OutputTokensDetails: Codable {
+            public var reasoning_tokens: Int?
+        }
     }
 }

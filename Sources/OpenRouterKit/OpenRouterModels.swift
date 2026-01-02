@@ -22,9 +22,9 @@ public struct Model: Codable, Sendable {
     public let contextLength: Double?
     public let architecture: ModelArchitecture
     public let topProvider: TopProviderInfo
-    public let perRequestLimits: PerRequestLimits
+    public let perRequestLimits: PerRequestLimits?
     public let supportedParameters: [Parameter]
-    public let defaultParameters: DefaultParameters
+    public let defaultParameters: DefaultParameters?
 
     enum CodingKeys: String, CodingKey {
         case id

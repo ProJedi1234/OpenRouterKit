@@ -156,7 +156,7 @@ public final class OpenRouterClient: Sendable {
             throw OpenRouterError(httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode, errorResponse: errorResponse)
         }
     }
-    
+
     #if canImport(Darwin)
     @available(iOS 15.0, macOS 12.0, *)
     public func streamChatRequest(request: OpenRouterRequest) -> AsyncStream<String> {

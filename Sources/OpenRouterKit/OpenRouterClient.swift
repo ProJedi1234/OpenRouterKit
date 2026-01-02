@@ -15,12 +15,21 @@ import FoundationNetworking
 public final class OpenRouterClient: Sendable {
     private let apiKey: String
     private let baseUrl: String
+    private let apiBaseUrl: String
     private let session: URLSession
     private let siteURL: String?
     private let siteName: String?
     
-    public init(baseURL: String = "https://openrouter.ai/api/v1/chat/completions", apiKey: String, siteURL: String? = nil, siteName: String? = nil, session: URLSession = URLSession.shared) {
+    public init(
+        baseURL: String = "https://openrouter.ai/api/v1/chat/completions",
+        apiKey: String,
+        siteURL: String? = nil,
+        siteName: String? = nil,
+        session: URLSession = URLSession.shared,
+        apiBaseURL: String = "https://openrouter.ai/api/v1"
+    ) {
         self.baseUrl = baseURL
+        self.apiBaseUrl = apiBaseURL
         self.apiKey = apiKey
         self.siteURL = siteURL
         self.siteName = siteName
@@ -60,6 +69,88 @@ public final class OpenRouterClient: Sendable {
         do {
             let decodedResponse = try JSONDecoder().decode(OpenRouterResponse.self, from: data)
             return decodedResponse
+        } catch {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode, errorResponse: errorResponse)
+        }
+    }
+
+    public func listModels(
+        category: String? = nil,
+        supportedParameters: String? = nil,
+        useRSS: String? = nil,
+        useRSSChatLinks: String? = nil
+    ) async throws -> ModelsListResponse {
+        var components = URLComponents(string: "\(apiBaseUrl)/models")
+        var queryItems: [URLQueryItem] = []
+        if let category {
+            queryItems.append(URLQueryItem(name: "category", value: category))
+        }
+        if let supportedParameters {
+            queryItems.append(URLQueryItem(name: "supported_parameters", value: supportedParameters))
+        }
+        if let useRSS {
+            queryItems.append(URLQueryItem(name: "use_rss", value: useRSS))
+        }
+        if let useRSSChatLinks {
+            queryItems.append(URLQueryItem(name: "use_rss_chat_links", value: useRSSChatLinks))
+        }
+        if !queryItems.isEmpty {
+            components?.queryItems = queryItems
+        }
+        guard let url = components?.url else {
+            throw URLError(.badURL)
+        }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "GET"
+        urlRequest.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        if let siteURL = siteURL {
+            urlRequest.addValue(siteURL, forHTTPHeaderField: "HTTP-Referer")
+        }
+        if let siteName = siteName {
+            urlRequest.addValue(siteName, forHTTPHeaderField: "X-Title")
+        }
+
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        if httpResponse.statusCode != 200 {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
+        }
+        do {
+            return try JSONDecoder().decode(ModelsListResponse.self, from: data)
+        } catch {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode, errorResponse: errorResponse)
+        }
+    }
+
+    public func listModelsForUser() async throws -> ModelsListResponse {
+        guard let url = URL(string: "\(apiBaseUrl)/models/user") else {
+            throw URLError(.badURL)
+        }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "GET"
+        urlRequest.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        if let siteURL = siteURL {
+            urlRequest.addValue(siteURL, forHTTPHeaderField: "HTTP-Referer")
+        }
+        if let siteName = siteName {
+            urlRequest.addValue(siteName, forHTTPHeaderField: "X-Title")
+        }
+
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        if httpResponse.statusCode != 200 {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
+        }
+        do {
+            return try JSONDecoder().decode(ModelsListResponse.self, from: data)
         } catch {
             let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
             throw OpenRouterError(httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode, errorResponse: errorResponse)

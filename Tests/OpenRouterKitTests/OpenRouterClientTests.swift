@@ -42,6 +42,24 @@ struct OpenRouterClientTests {
         #expect(response.choices.count == 1, "Response should contain one choice")
         #expect(!response.choices[0].message.content.isEmpty, "Response should contain a message")
     }
+
+    @Test func testListModels() async throws {
+        let response = try await client.listModels()
+
+        #expect(!response.data.isEmpty, "Models list should not be empty")
+        let firstModel = response.data[0]
+        #expect(!firstModel.id.isEmpty, "Model id should not be empty")
+        #expect(!firstModel.name.isEmpty, "Model name should not be empty")
+    }
+
+    @Test func testListModelsForUser() async throws {
+        let response = try await client.listModelsForUser()
+
+        #expect(!response.data.isEmpty, "User models list should not be empty")
+        let firstModel = response.data[0]
+        #expect(!firstModel.id.isEmpty, "Model id should not be empty")
+        #expect(!firstModel.name.isEmpty, "Model name should not be empty")
+    }
     
     #if canImport(Darwin)
     @available(iOS 15.0, macOS 12.0, *)

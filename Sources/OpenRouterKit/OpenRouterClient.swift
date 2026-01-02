@@ -14,22 +14,19 @@ import FoundationNetworking
 // Define the OpenRouterClient
 public final class OpenRouterClient: Sendable {
     private let apiKey: String
-    private let baseUrl: String
-    private let apiBaseUrl: String
+    private let baseURL: String
     private let session: URLSession
     private let siteURL: String?
     private let siteName: String?
-    
+
     public init(
-        baseURL: String = "https://openrouter.ai/api/v1/chat/completions",
+        baseURL: String = "https://openrouter.ai/api/v1",
         apiKey: String,
         siteURL: String? = nil,
         siteName: String? = nil,
-        session: URLSession = URLSession.shared,
-        apiBaseURL: String = "https://openrouter.ai/api/v1"
+        session: URLSession = URLSession.shared
     ) {
-        self.baseUrl = baseURL
-        self.apiBaseUrl = apiBaseURL
+        self.baseURL = baseURL
         self.apiKey = apiKey
         self.siteURL = siteURL
         self.siteName = siteName
@@ -39,7 +36,10 @@ public final class OpenRouterClient: Sendable {
     // Main async function to make a chat completion request
     public func sendChatRequest(request: OpenRouterRequest) async throws -> OpenRouterResponse {
         // Create the URL request
-        var urlRequest = URLRequest(url: URL(string: baseUrl)!)
+        guard let url = URL(string: "\(baseURL)/chat/completions") else {
+            throw URLError(.badURL)
+        }
+        var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -81,7 +81,7 @@ public final class OpenRouterClient: Sendable {
         useRSS: String? = nil,
         useRSSChatLinks: String? = nil
     ) async throws -> ModelsListResponse {
-        var components = URLComponents(string: "\(apiBaseUrl)/models")
+        var components = URLComponents(string: "\(baseURL)/models")
         var queryItems: [URLQueryItem] = []
         if let category {
             queryItems.append(URLQueryItem(name: "category", value: category))
@@ -128,7 +128,7 @@ public final class OpenRouterClient: Sendable {
     }
 
     public func listModelsForUser() async throws -> ModelsListResponse {
-        guard let url = URL(string: "\(apiBaseUrl)/models/user") else {
+        guard let url = URL(string: "\(baseURL)/models/user") else {
             throw URLError(.badURL)
         }
         var urlRequest = URLRequest(url: url)
@@ -165,7 +165,11 @@ public final class OpenRouterClient: Sendable {
                 var request = request
                 request.stream = true
                 do {
-                    var urlRequest = URLRequest(url: URL(string: baseUrl)!)
+                    guard let url = URL(string: "\(baseURL)/chat/completions") else {
+                        continuation.finish()
+                        return
+                    }
+                    var urlRequest = URLRequest(url: url)
                     urlRequest.httpMethod = "POST"
                     urlRequest.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
                     urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")

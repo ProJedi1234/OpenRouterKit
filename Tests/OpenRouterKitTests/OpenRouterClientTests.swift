@@ -36,11 +36,29 @@ struct OpenRouterClientTests {
             .init(role: .user, content: .string("Tell me a joke"))
         ]
         
-        let request = OpenRouterRequest(messages: messages, model: "meta-llama/llama-4-scout:free")
+        let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-7b-instruct:free")
         let response = try await client.sendChatRequest(request: request)
         
         #expect(response.choices.count == 1, "Response should contain one choice")
         #expect(!response.choices[0].message.content.isEmpty, "Response should contain a message")
+    }
+
+    @Test func testListModels() async throws {
+        let response = try await client.listModels()
+
+        #expect(!response.data.isEmpty, "Models list should not be empty")
+        let firstModel = response.data[0]
+        #expect(!firstModel.id.isEmpty, "Model id should not be empty")
+        #expect(!firstModel.name.isEmpty, "Model name should not be empty")
+    }
+
+    @Test func testListModelsForUser() async throws {
+        let response = try await client.listModelsForUser()
+
+        #expect(!response.data.isEmpty, "User models list should not be empty")
+        let firstModel = response.data[0]
+        #expect(!firstModel.id.isEmpty, "Model id should not be empty")
+        #expect(!firstModel.name.isEmpty, "Model name should not be empty")
     }
     
     #if canImport(Darwin)
@@ -52,7 +70,7 @@ struct OpenRouterClientTests {
         var lastChunkTime = Date()
         var timesBetweenChunks: [TimeInterval] = []
         
-        let request = OpenRouterRequest(messages: messages, model: "meta-llama/llama-4-scout:free", stream: true)
+        let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-7b-instruct:free", stream: true)
         let stream = client.streamChatRequest(request: request)
         
         for await text in stream {

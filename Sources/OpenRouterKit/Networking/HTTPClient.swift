@@ -75,6 +75,7 @@ final class URLSessionHTTPClient: HTTPClient {
 
     @available(iOS 15.0, macOS 12.0, *)
     func stream(_ endpoint: Endpoint) async throws -> AsyncStream<String> {
+        #if canImport(Darwin)
         return AsyncStream { continuation in
             Task {
                 do {
@@ -112,6 +113,10 @@ final class URLSessionHTTPClient: HTTPClient {
                 }
             }
         }
+        #else
+        // Streaming is not supported on Linux due to URLSession.bytes(for:) not being available
+        fatalError("Streaming is only supported on Darwin platforms (macOS, iOS, etc.)")
+        #endif
     }
 
     private static func processLine(_ line: String) -> String? {

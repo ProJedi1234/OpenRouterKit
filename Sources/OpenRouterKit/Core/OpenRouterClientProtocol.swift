@@ -30,8 +30,7 @@ public protocol ChatServiceProtocol: Sendable {
     /// - Returns: The chat response
     /// - Throws: OpenRouterError if the request fails
     func send(request: ChatRequest) async throws -> ChatResponse
-    
-    #if canImport(Darwin)
+
     /// Streams a chat completion response.
     ///
     /// - Parameter request: The chat request to stream
@@ -39,7 +38,6 @@ public protocol ChatServiceProtocol: Sendable {
     /// - Throws: OpenRouterError if the request fails
     @available(iOS 15.0, macOS 12.0, *)
     func stream(request: ChatRequest) -> AsyncStream<String>
-    #endif
 }
 
 /// Protocol for model listing operations.

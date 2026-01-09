@@ -11,10 +11,6 @@ import Foundation
 import FoundationNetworking
 #endif
 
-#if canImport(Darwin)
-import Darwin
-#endif
-
 /// A client for interacting with the OpenRouter API.
 ///
 /// `OpenRouterClient` provides access to chat completions, model information,
@@ -200,8 +196,7 @@ public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
     public func getCurrentKey() async throws -> CurrentAPIKeyResponse {
         try await keys.getCurrent()
     }
-    
-    #if canImport(Darwin)
+
     /// Streams a chat completion response.
     ///
     /// - Parameter request: The chat request to stream
@@ -235,5 +230,4 @@ public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
         )
         return chat.stream(request: chatRequest)
     }
-    #endif
 }

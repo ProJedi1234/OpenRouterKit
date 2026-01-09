@@ -11,10 +11,6 @@ import Foundation
 import FoundationNetworking
 #endif
 
-#if canImport(Darwin)
-import Darwin
-#endif
-
 /// Protocol for making HTTP requests to the OpenRouter API.
 protocol HTTPClient: Sendable {
     /// Executes an HTTP request and decodes the response.
@@ -25,8 +21,7 @@ protocol HTTPClient: Sendable {
     /// - Returns: Decoded response of type T
     /// - Throws: OpenRouterError or URLError if the request fails
     func execute<T: Decodable>(_ endpoint: Endpoint, expectedStatusCode: Int) async throws -> T
-    
-    #if canImport(Darwin)
+
     /// Streams a response from an HTTP request.
     ///
     /// - Parameter endpoint: The endpoint to stream from
@@ -34,7 +29,6 @@ protocol HTTPClient: Sendable {
     /// - Throws: OpenRouterError or URLError if the request fails
     @available(iOS 15.0, macOS 12.0, *)
     func stream(_ endpoint: Endpoint) async throws -> AsyncStream<String>
-    #endif
 }
 
 /// URLSession-based implementation of HTTPClient.
@@ -78,8 +72,7 @@ final class URLSessionHTTPClient: HTTPClient {
             )
         }
     }
-    
-    #if canImport(Darwin)
+
     @available(iOS 15.0, macOS 12.0, *)
     func stream(_ endpoint: Endpoint) async throws -> AsyncStream<String> {
         return AsyncStream { continuation in
@@ -87,11 +80,11 @@ final class URLSessionHTTPClient: HTTPClient {
                 do {
                     let request = try requestBuilder.build(endpoint)
                     let (bytes, response) = try await session.bytes(for: request)
-                    
+
                     guard let httpResponse = response as? HTTPURLResponse else {
                         throw URLError(.badServerResponse)
                     }
-                    
+
                     if httpResponse.statusCode != 200 {
                         let errorData = try await bytes.reduce(into: Data()) { data, byte in
                             data.append(byte)
@@ -99,7 +92,7 @@ final class URLSessionHTTPClient: HTTPClient {
                         let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: errorData)
                         throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
                     }
-                    
+
                     var buffer = ""
                     for try await byte in bytes {
                         if let char = String(bytes: [byte], encoding: .utf8) {
@@ -112,7 +105,7 @@ final class URLSessionHTTPClient: HTTPClient {
                             }
                         }
                     }
-                    
+
                     continuation.finish()
                 } catch {
                     continuation.finish()
@@ -120,11 +113,11 @@ final class URLSessionHTTPClient: HTTPClient {
             }
         }
     }
-    
+
     private static func processLine(_ line: String) -> String? {
         let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedLine.isEmpty, trimmedLine.hasPrefix("data: ") else { return nil }
-        
+
         let jsonString = String(trimmedLine.dropFirst(6))
         guard jsonString != "[DONE]",
               let jsonData = jsonString.data(using: .utf8),
@@ -134,5 +127,4 @@ final class URLSessionHTTPClient: HTTPClient {
 
         return content
     }
-    #endif
 }

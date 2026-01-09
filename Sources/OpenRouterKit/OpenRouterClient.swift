@@ -157,6 +157,231 @@ public final class OpenRouterClient: Sendable {
         }
     }
 
+    // MARK: - API Keys Methods
+
+    /// List all API keys
+    /// - Parameters:
+    ///   - includeDisabled: Whether to include disabled API keys in the response
+    ///   - offset: Number of API keys to skip for pagination
+    /// - Returns: A list of API keys
+    public func listKeys(
+        includeDisabled: Bool? = nil,
+        offset: String? = nil
+    ) async throws -> APIKeyListResponse {
+        var components = URLComponents(string: "\(baseURL)/keys")
+        var queryItems: [URLQueryItem] = []
+        if let includeDisabled {
+            queryItems.append(URLQueryItem(name: "include_disabled", value: String(includeDisabled)))
+        }
+        if let offset {
+            queryItems.append(URLQueryItem(name: "offset", value: offset))
+        }
+        if !queryItems.isEmpty {
+            components?.queryItems = queryItems
+        }
+        guard let url = components?.url else {
+            throw URLError(.badURL)
+        }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "GET"
+        urlRequest.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        if let siteURL = siteURL {
+            urlRequest.addValue(siteURL, forHTTPHeaderField: "HTTP-Referer")
+        }
+        if let siteName = siteName {
+            urlRequest.addValue(siteName, forHTTPHeaderField: "X-Title")
+        }
+
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        if httpResponse.statusCode != 200 {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
+        }
+        do {
+            return try JSONDecoder().decode(APIKeyListResponse.self, from: data)
+        } catch {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode, errorResponse: errorResponse)
+        }
+    }
+
+    /// Create a new API key
+    /// - Parameter request: The request containing the API key details
+    /// - Returns: The created API key information including the actual key string
+    public func createKey(request: CreateAPIKeyRequest) async throws -> CreateAPIKeyResponse {
+        guard let url = URL(string: "\(baseURL)/keys") else {
+            throw URLError(.badURL)
+        }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let siteURL = siteURL {
+            urlRequest.addValue(siteURL, forHTTPHeaderField: "HTTP-Referer")
+        }
+        if let siteName = siteName {
+            urlRequest.addValue(siteName, forHTTPHeaderField: "X-Title")
+        }
+
+        let jsonData = try JSONEncoder().encode(request)
+        urlRequest.httpBody = jsonData
+
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        if httpResponse.statusCode != 201 {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
+        }
+        do {
+            return try JSONDecoder().decode(CreateAPIKeyResponse.self, from: data)
+        } catch {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode, errorResponse: errorResponse)
+        }
+    }
+
+    /// Get a single API key by its hash
+    /// - Parameter hash: The hash identifier of the API key to retrieve
+    /// - Returns: The API key information
+    public func getKey(hash: String) async throws -> APIKeyResponse {
+        guard let url = URL(string: "\(baseURL)/keys/\(hash)") else {
+            throw URLError(.badURL)
+        }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "GET"
+        urlRequest.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        if let siteURL = siteURL {
+            urlRequest.addValue(siteURL, forHTTPHeaderField: "HTTP-Referer")
+        }
+        if let siteName = siteName {
+            urlRequest.addValue(siteName, forHTTPHeaderField: "X-Title")
+        }
+
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        if httpResponse.statusCode != 200 {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
+        }
+        do {
+            return try JSONDecoder().decode(APIKeyResponse.self, from: data)
+        } catch {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode, errorResponse: errorResponse)
+        }
+    }
+
+    /// Update an API key
+    /// - Parameters:
+    ///   - hash: The hash identifier of the API key to update
+    ///   - request: The request containing the fields to update
+    /// - Returns: The updated API key information
+    public func updateKey(hash: String, request: UpdateAPIKeyRequest) async throws -> APIKeyResponse {
+        guard let url = URL(string: "\(baseURL)/keys/\(hash)") else {
+            throw URLError(.badURL)
+        }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "PATCH"
+        urlRequest.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let siteURL = siteURL {
+            urlRequest.addValue(siteURL, forHTTPHeaderField: "HTTP-Referer")
+        }
+        if let siteName = siteName {
+            urlRequest.addValue(siteName, forHTTPHeaderField: "X-Title")
+        }
+
+        let jsonData = try JSONEncoder().encode(request)
+        urlRequest.httpBody = jsonData
+
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        if httpResponse.statusCode != 200 {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
+        }
+        do {
+            return try JSONDecoder().decode(APIKeyResponse.self, from: data)
+        } catch {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode, errorResponse: errorResponse)
+        }
+    }
+
+    /// Delete an API key
+    /// - Parameter hash: The hash identifier of the API key to delete
+    /// - Returns: Confirmation that the API key was deleted
+    public func deleteKey(hash: String) async throws -> DeleteAPIKeyResponse {
+        guard let url = URL(string: "\(baseURL)/keys/\(hash)") else {
+            throw URLError(.badURL)
+        }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "DELETE"
+        urlRequest.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        if let siteURL = siteURL {
+            urlRequest.addValue(siteURL, forHTTPHeaderField: "HTTP-Referer")
+        }
+        if let siteName = siteName {
+            urlRequest.addValue(siteName, forHTTPHeaderField: "X-Title")
+        }
+
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        if httpResponse.statusCode != 200 {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
+        }
+        do {
+            return try JSONDecoder().decode(DeleteAPIKeyResponse.self, from: data)
+        } catch {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode, errorResponse: errorResponse)
+        }
+    }
+
+    /// Get information on the API key associated with the current authentication session
+    /// - Returns: Current API key information
+    public func getCurrentKey() async throws -> CurrentAPIKeyResponse {
+        guard let url = URL(string: "\(baseURL)/key") else {
+            throw URLError(.badURL)
+        }
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "GET"
+        urlRequest.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        if let siteURL = siteURL {
+            urlRequest.addValue(siteURL, forHTTPHeaderField: "HTTP-Referer")
+        }
+        if let siteName = siteName {
+            urlRequest.addValue(siteName, forHTTPHeaderField: "X-Title")
+        }
+
+        let (data, response) = try await session.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        if httpResponse.statusCode != 200 {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
+        }
+        do {
+            return try JSONDecoder().decode(CurrentAPIKeyResponse.self, from: data)
+        } catch {
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
+            throw OpenRouterError(httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode, errorResponse: errorResponse)
+        }
+    }
+
     #if canImport(Darwin)
     @available(iOS 15.0, macOS 12.0, *)
     public func streamChatRequest(request: OpenRouterRequest) -> AsyncStream<String> {

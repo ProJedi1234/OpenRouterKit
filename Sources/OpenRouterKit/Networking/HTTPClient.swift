@@ -22,13 +22,16 @@ protocol HTTPClient: Sendable {
     /// - Throws: OpenRouterError or URLError if the request fails
     func execute<T: Decodable>(_ endpoint: Endpoint, expectedStatusCode: Int) async throws -> T
 
+    #if canImport(Darwin)
     /// Streams a response from an HTTP request.
     ///
     /// - Parameter endpoint: The endpoint to stream from
     /// - Returns: An AsyncStream of String chunks
     /// - Throws: OpenRouterError or URLError if the request fails
+    /// - Note: Streaming is only available on Darwin platforms (macOS, iOS, etc.)
     @available(iOS 15.0, macOS 12.0, *)
     func stream(_ endpoint: Endpoint) async throws -> AsyncStream<String>
+    #endif
 }
 
 /// URLSession-based implementation of HTTPClient.
@@ -73,9 +76,9 @@ final class URLSessionHTTPClient: HTTPClient {
         }
     }
 
+    #if canImport(Darwin)
     @available(iOS 15.0, macOS 12.0, *)
     func stream(_ endpoint: Endpoint) async throws -> AsyncStream<String> {
-        #if canImport(Darwin)
         return AsyncStream { continuation in
             Task {
                 do {
@@ -113,11 +116,8 @@ final class URLSessionHTTPClient: HTTPClient {
                 }
             }
         }
-        #else
-        // Streaming is not supported on Linux due to URLSession.bytes(for:) not being available
-        fatalError("Streaming is only supported on Darwin platforms (macOS, iOS, etc.)")
-        #endif
     }
+    #endif
 
     private static func processLine(_ line: String) -> String? {
         let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)

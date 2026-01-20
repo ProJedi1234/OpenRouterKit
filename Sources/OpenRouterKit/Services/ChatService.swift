@@ -22,6 +22,7 @@ final class ChatService: ChatServiceProtocol {
         try await httpClient.execute(.chatCompletions(request), expectedStatusCode: 200)
     }
 
+    #if canImport(Darwin)
     @available(iOS 15.0, macOS 12.0, *)
     func stream(request: ChatRequest) -> AsyncStream<String> {
         return AsyncStream { continuation in
@@ -40,4 +41,5 @@ final class ChatService: ChatServiceProtocol {
             }
         }
     }
+    #endif
 }

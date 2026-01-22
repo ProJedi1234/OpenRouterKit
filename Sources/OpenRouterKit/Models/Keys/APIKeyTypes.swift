@@ -1,5 +1,5 @@
 //
-//  OpenRouterKeyModels.swift
+//  APIKeyTypes.swift
 //  OpenRouterKit
 //
 //  Created by Aditya Dhar on 12/19/24.

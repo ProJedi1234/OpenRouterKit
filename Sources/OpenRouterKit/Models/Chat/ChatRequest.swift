@@ -1,5 +1,5 @@
 //
-//  OpenRouterRequest.swift
+//  ChatRequest.swift
 //  OpenRouterKit
 //
 //  Created by Aditya Dhar on 10/17/24.
@@ -7,31 +7,46 @@
 
 import Foundation
 
-/// Represents a request to the OpenRouter API.
-public struct OpenRouterRequest: Codable, Sendable {
+/// Represents a request to the OpenRouter chat completions API.
+///
+/// Use `ChatRequest` to configure a chat completion request with messages,
+/// model selection, and various generation parameters.
+///
+/// Example:
+/// ```swift
+/// let request = ChatRequest(
+///     messages: [Message(role: .user, content: .string("Hello!"))],
+///     model: "mistralai/mixtral-8x7b-instruct",
+///     temperature: 0.7
+/// )
+/// ```
+public struct ChatRequest: Codable, Sendable {
     /// Either "messages" or "prompt" is required.
     public var messages: [Message]?
+    
+    /// Alternative to messages - a simple prompt string.
     public var prompt: String?
     
-    /// Model parameter.
+    /// Model identifier to use for the completion.
     public var model: String?
     
-    /// Response format.
+    /// Response format configuration.
     public var responseFormat: ResponseFormat?
     
     /// Text indicating where to stop generating.
     public var stop: [String]?
     
-    /// Enable streaming.
+    /// Enable streaming responses.
     public var stream: Bool?
     
     /// Maximum number of tokens to generate.
     public var maxTokens: Int?
     
     /// Sampling temperature; lower values mean more conservative sampling.
+    /// Range typically 0.0 to 2.0.
     public var temperature: Float?
     
-    /// Nucleus sampling parameter.
+    /// Nucleus sampling parameter. Controls diversity via nucleus sampling.
     public var topP: Float?
     
     /// The total number of tokens to consider (not available for OpenAI models).
@@ -61,7 +76,7 @@ public struct OpenRouterRequest: Codable, Sendable {
     /// Transforms to apply to the input prompt.
     public var transforms: [String]?
     
-    /// List of models to use.
+    /// List of models to use (for routing).
     public var models: [String]?
     
     /// Route option, possible values: 'fallback'.
@@ -81,7 +96,55 @@ public struct OpenRouterRequest: Codable, Sendable {
              logitBias = "logit_bias", transforms, models, route, provider, reasoning
     }
     
-    public init(messages: [Message]? = nil, prompt: String? = nil, model: String? = nil, responseFormat: ResponseFormat? = nil, stop: [String]? = nil, stream: Bool? = nil, maxTokens: Int? = nil, temperature: Float? = nil, topP: Float? = nil, topK: Int? = nil, frequencyPenalty: Float? = nil, presencePenalty: Float? = nil, repetitionPenalty: Float? = nil, seed: Int? = nil, tools: [Tool]? = nil, toolChoice: ToolChoice? = nil, logitBias: [Int : Float]? = nil, transforms: [String]? = nil, models: [String]? = nil, route: String? = nil, provider: ProviderPreferences? = nil, reasoning: ReasoningConfiguration? = nil) {
+    /// Creates a new chat request.
+    ///
+    /// - Parameters:
+    ///   - messages: Array of messages in the conversation
+    ///   - prompt: Alternative to messages - a simple prompt string
+    ///   - model: Model identifier to use
+    ///   - responseFormat: Response format configuration
+    ///   - stop: Stop sequences
+    ///   - stream: Enable streaming
+    ///   - maxTokens: Maximum tokens to generate
+    ///   - temperature: Sampling temperature
+    ///   - topP: Nucleus sampling parameter
+    ///   - topK: Top-K sampling parameter
+    ///   - frequencyPenalty: Frequency penalty value
+    ///   - presencePenalty: Presence penalty value
+    ///   - repetitionPenalty: Repetition penalty value
+    ///   - seed: Random seed
+    ///   - tools: Available tools
+    ///   - toolChoice: Tool choice configuration
+    ///   - logitBias: Logit bias map
+    ///   - transforms: Transforms to apply
+    ///   - models: List of models for routing
+    ///   - route: Route option
+    ///   - provider: Provider preferences
+    ///   - reasoning: Reasoning configuration
+    public init(
+        messages: [Message]? = nil,
+        prompt: String? = nil,
+        model: String? = nil,
+        responseFormat: ResponseFormat? = nil,
+        stop: [String]? = nil,
+        stream: Bool? = nil,
+        maxTokens: Int? = nil,
+        temperature: Float? = nil,
+        topP: Float? = nil,
+        topK: Int? = nil,
+        frequencyPenalty: Float? = nil,
+        presencePenalty: Float? = nil,
+        repetitionPenalty: Float? = nil,
+        seed: Int? = nil,
+        tools: [Tool]? = nil,
+        toolChoice: ToolChoice? = nil,
+        logitBias: [Int: Float]? = nil,
+        transforms: [String]? = nil,
+        models: [String]? = nil,
+        route: String? = nil,
+        provider: ProviderPreferences? = nil,
+        reasoning: ReasoningConfiguration? = nil
+    ) {
         self.messages = messages
         self.prompt = prompt
         self.model = model
@@ -107,7 +170,9 @@ public struct OpenRouterRequest: Codable, Sendable {
     }
 }
 
-/// Represents a message within the OpenRouter request.
+/// Represents a message within a chat request.
+///
+/// Messages are the building blocks of a conversation with the model.
 public struct Message: Codable, Sendable {
     /// The role of the sender.
     public var role: Role
@@ -120,9 +185,22 @@ public struct Message: Codable, Sendable {
 
     /// The role enum representing the sender's role.
     public enum Role: String, Codable, Sendable {
-        case user, assistant, system, tool
+        /// User message
+        case user
+        /// Assistant message
+        case assistant
+        /// System message
+        case system
+        /// Tool message
+        case tool
     }
     
+    /// Creates a new message.
+    ///
+    /// - Parameters:
+    ///   - role: The role of the message sender
+    ///   - content: The message content (string or content parts)
+    ///   - name: Optional name for the sender
     public init(role: Role, content: StringOrContentPart, name: String? = nil) {
         self.role = role
         self.content = content
@@ -132,7 +210,9 @@ public struct Message: Codable, Sendable {
 
 /// Represents the content of a message, which can be either a string or an array of content parts.
 public enum StringOrContentPart: Codable, Sendable {
+    /// Simple string content
     case string(String)
+    /// Array of content parts (text, images, etc.)
     case contentParts([ContentPart])
 
     enum CodingKeys: String, CodingKey {
@@ -163,14 +243,15 @@ public enum StringOrContentPart: Codable, Sendable {
 
 /// Represents the content of a message, which can be either text or an image.
 public enum ContentPart: Codable, Sendable {
+    /// Text content
     case text(TextContent)
+    /// Image content
     case image(ImageContentPart)
 
     enum CodingKeys: String, CodingKey {
         case type
     }
 
-    /// Decoder initializer to handle different content types.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let type = try container.decode(String.self, forKey: .type)
@@ -188,7 +269,6 @@ public enum ContentPart: Codable, Sendable {
         }
     }
 
-    /// Encoder to handle different content types.
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
@@ -202,7 +282,7 @@ public enum ContentPart: Codable, Sendable {
     }
 }
 
-/// Represents text content in the OpenRouter request.
+/// Represents text content in a chat request.
 public struct TextContent: Codable, Sendable {
     /// The type of content, should be "text".
     public let type: String
@@ -211,7 +291,7 @@ public struct TextContent: Codable, Sendable {
     public let text: String
 }
 
-/// Represents image content in the OpenRouter request.
+/// Represents image content in a chat request.
 public struct ImageContentPart: Codable, Sendable {
     /// The type of content, should be "image_url".
     public let type: String
@@ -225,7 +305,7 @@ public struct ImageContentPart: Codable, Sendable {
     }
 }
 
-/// Represents an image URL and optional detail in the OpenRouter request.
+/// Represents an image URL and optional detail in a chat request.
 public struct ImageUrl: Codable, Sendable {
     /// The image URL or base64 encoded image data.
     public let url: String
@@ -234,7 +314,7 @@ public struct ImageUrl: Codable, Sendable {
     public let detail: String?
 }
 
-/// Represents a tool available for the OpenRouter request.
+/// Represents a tool available for use in a chat request.
 public struct Tool: Codable, Sendable {
     /// The type of the tool.
     public let type: String
@@ -251,14 +331,17 @@ public struct FunctionDescription: Codable, Sendable {
     /// The name of the function.
     public let name: String
     
-    /// Parameters for the function, now defined more specifically.
+    /// Parameters for the function.
     public let parameters: [String: String]
 }
 
-/// Represents the choice of tools in the OpenRouter request.
+/// Represents the choice of tools in a chat request.
 public enum ToolChoice: Codable, Sendable {
+    /// No tools should be used
     case none
+    /// Automatically choose tools
     case auto
+    /// Use a specific function
     case function(Function)
 
     /// Represents a specific function choice.
@@ -273,15 +356,22 @@ public struct ResponseFormat: Codable, Sendable {
     /// The type of the response format.
     public let type: String
     
+    /// Creates a new response format.
+    ///
+    /// - Parameter type: The format type (e.g., "json_object")
     public init(type: String) {
         self.type = type
     }
 }
 
-/// Represents provider preferences in the OpenRouter request.
+/// Represents provider preferences in a chat request.
 public struct ProviderPreferences: Codable, Sendable {
+    /// Ordered list of preferred providers.
     public let order: [String]
     
+    /// Creates new provider preferences.
+    ///
+    /// - Parameter order: Ordered list of provider names
     public init(order: [String]) {
         self.order = order
     }
@@ -292,6 +382,9 @@ public struct ReasoningConfiguration: Codable, Sendable {
     /// The effort level for reasoning.
     public var effort: ReasoningEffort
     
+    /// Creates a new reasoning configuration.
+    ///
+    /// - Parameter effort: The reasoning effort level
     public init(effort: ReasoningEffort) {
         self.effort = effort
     }
@@ -308,11 +401,3 @@ public enum ReasoningEffort: String, Codable, Sendable {
     /// Deep reasoning for complex problems.
     case high
 }
-
-/// Example of how to create an instance of the request.
-public let exampleRequest = OpenRouterRequest(
-    messages: [
-        Message(role: .user, content: .string("Who are you?"))
-    ],
-    model: "mistralai/mixtral-8x7b-instruct"
-)

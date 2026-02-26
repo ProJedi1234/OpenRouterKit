@@ -90,10 +90,6 @@ public enum StringOrContentPart: Codable, Sendable {
     /// Array of content parts (text, images, etc.)
     case contentParts([ContentPart])
 
-    enum CodingKeys: String, CodingKey {
-        case type
-    }
-
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if let stringValue = try? container.decode(String.self) {
@@ -164,6 +160,11 @@ public struct TextContent: Codable, Sendable {
 
     /// The actual text content.
     public let text: String
+
+    public init(type: String = "text", text: String) {
+        self.type = type
+        self.text = text
+    }
 }
 
 /// Represents image content in a chat request.
@@ -178,6 +179,11 @@ public struct ImageContentPart: Codable, Sendable {
         case type
         case imageURL = "image_url"
     }
+
+    public init(type: String = "image_url", imageURL: ImageUrl) {
+        self.type = type
+        self.imageURL = imageURL
+    }
 }
 
 /// Represents an image URL and optional detail in a chat request.
@@ -187,4 +193,9 @@ public struct ImageUrl: Codable, Sendable {
 
     /// Optional detail string for the image.
     public let detail: String?
+
+    public init(url: String, detail: String? = nil) {
+        self.url = url
+        self.detail = detail
+    }
 }

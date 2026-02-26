@@ -214,10 +214,10 @@ struct ReasoningIntegrationTests {
             reasoning: ReasoningConfiguration(effort: .minimal)
         )
         
-        let response = try await client.sendChatRequest(request: request)
+        let response = try await client.chat.send(request: request)
         
         #expect(response.choices.count == 1, "Response should contain one choice")
-        #expect(!response.choices[0].message.content.isEmpty, "Response should contain a message")
+        #expect(response.choices[0].message.content?.isEmpty == false, "Response should contain a message")
         
         // Verify usage information is present
         #expect(response.usage != nil, "Response should contain usage information")
@@ -246,14 +246,14 @@ struct ReasoningIntegrationTests {
             reasoning: ReasoningConfiguration(effort: .high)
         )
         
-        let response = try await client.sendChatRequest(request: request)
+        let response = try await client.chat.send(request: request)
         
         #expect(response.choices.count == 1, "Response should contain one choice")
-        #expect(!response.choices[0].message.content.isEmpty, "Response should contain a message")
+        #expect(response.choices[0].message.content?.isEmpty == false, "Response should contain a message")
         #expect(response.usage != nil, "Response should contain usage information")
         
         print("Response with high effort reasoning:")
-        print(response.choices[0].message.content)
+        print(response.choices[0].message.content ?? "")
         
         if let usage = response.usage {
             print("\nToken usage - Total: \(usage.total_tokens)")
@@ -281,7 +281,7 @@ struct ReasoningIntegrationTests {
             reasoning: ReasoningConfiguration(effort: .medium)
         )
         
-        let stream = client.streamChatRequest(request: request)
+        let stream = client.chat.stream(request: request)
         
         var chunkCount = 0
         for await text in stream {
@@ -320,13 +320,13 @@ struct ReasoningIntegrationTests {
                 reasoning: ReasoningConfiguration(effort: effort)
             )
             
-            let response = try await client.sendChatRequest(request: request)
+            let response = try await client.chat.send(request: request)
             
             #expect(response.choices.count == 1, "Response with \(name) effort should contain one choice")
-            #expect(!response.choices[0].message.content.isEmpty, "Response should contain content")
+            #expect(response.choices[0].message.content?.isEmpty == false, "Response should contain content")
             
             print("\nEffort level: \(name)")
-            print("Response: \(response.choices[0].message.content)")
+            print("Response: \(response.choices[0].message.content ?? "")")
             if let usage = response.usage {
                 print("Tokens: \(usage.total_tokens)")
                 if let reasoningTokens = usage.output_tokens_details?.reasoning_tokens {
@@ -349,11 +349,11 @@ struct ReasoningIntegrationTests {
             // No reasoning parameter
         )
         
-        let response = try await client.sendChatRequest(request: request)
+        let response = try await client.chat.send(request: request)
         
         #expect(response.choices.count == 1, "Response should work without reasoning")
-        #expect(!response.choices[0].message.content.isEmpty, "Response should contain a message")
+        #expect(response.choices[0].message.content?.isEmpty == false, "Response should contain a message")
         
-        print("Response without reasoning: \(response.choices[0].message.content)")
+        print("Response without reasoning: \(response.choices[0].message.content ?? "")")
     }
 }

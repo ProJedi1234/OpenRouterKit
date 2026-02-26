@@ -37,14 +37,14 @@ struct OpenRouterClientTests {
         ]
         
         let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-7b-instruct:free")
-        let response = try await client.sendChatRequest(request: request)
+        let response = try await client.chat.send(request: request)
         
         #expect(response.choices.count == 1, "Response should contain one choice")
-        #expect(!response.choices[0].message.content.isEmpty, "Response should contain a message")
+        #expect(response.choices[0].message.content?.isEmpty == false, "Response should contain a message")
     }
 
     @Test func testListModels() async throws {
-        let response = try await client.listModels()
+        let response = try await client.models.list(category: nil, supportedParameters: nil, useRSS: nil, useRSSChatLinks: nil)
 
         #expect(!response.data.isEmpty, "Models list should not be empty")
         let firstModel = response.data[0]
@@ -53,7 +53,7 @@ struct OpenRouterClientTests {
     }
 
     @Test func testListModelsForUser() async throws {
-        let response = try await client.listModelsForUser()
+        let response = try await client.models.listForUser()
 
         #expect(!response.data.isEmpty, "User models list should not be empty")
         let firstModel = response.data[0]
@@ -71,7 +71,7 @@ struct OpenRouterClientTests {
         var timesBetweenChunks: [TimeInterval] = []
         
         let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-7b-instruct:free", stream: true)
-        let stream = client.streamChatRequest(request: request)
+        let stream = client.chat.stream(request: request)
         
         for await text in stream {
             let now = Date()

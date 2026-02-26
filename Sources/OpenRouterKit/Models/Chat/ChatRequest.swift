@@ -173,15 +173,35 @@ public struct ChatRequest: Codable, Sendable {
 /// Represents a message within a chat request.
 ///
 /// Messages are the building blocks of a conversation with the model.
+/// Supports regular text messages, assistant messages with tool calls,
+/// and tool result messages.
+///
+/// Example - regular message:
+/// ```swift
+/// Message(role: .user, content: .string("What's the weather?"))
+/// ```
+///
+/// Example - tool result message:
+/// ```swift
+/// Message(role: .tool, content: .string("{\"temp\": 72}"), toolCallId: "call_abc123")
+/// ```
 public struct Message: Codable, Sendable {
     /// The role of the sender.
     public var role: Role
-    
-    /// The content of the message.
-    public var content: StringOrContentPart
+
+    /// The content of the message. Optional for assistant messages with tool calls.
+    public var content: StringOrContentPart?
 
     /// Optional name for identifying the sender.
     public var name: String?
+
+    /// Tool calls made by the assistant. Present in assistant messages
+    /// when the model decides to call one or more tools.
+    public var toolCalls: [ToolCall]?
+
+    /// The ID of the tool call this message is responding to.
+    /// Required for messages with role `.tool`.
+    public var toolCallId: String?
 
     /// The role enum representing the sender's role.
     public enum Role: String, Codable, Sendable {
@@ -191,20 +211,38 @@ public struct Message: Codable, Sendable {
         case assistant
         /// System message
         case system
-        /// Tool message
+        /// Tool result message
         case tool
     }
-    
+
+    enum CodingKeys: String, CodingKey {
+        case role
+        case content
+        case name
+        case toolCalls = "tool_calls"
+        case toolCallId = "tool_call_id"
+    }
+
     /// Creates a new message.
     ///
     /// - Parameters:
     ///   - role: The role of the message sender
     ///   - content: The message content (string or content parts)
     ///   - name: Optional name for the sender
-    public init(role: Role, content: StringOrContentPart, name: String? = nil) {
+    ///   - toolCalls: Optional tool calls (for assistant messages)
+    ///   - toolCallId: Optional tool call ID (for tool result messages)
+    public init(
+        role: Role,
+        content: StringOrContentPart? = nil,
+        name: String? = nil,
+        toolCalls: [ToolCall]? = nil,
+        toolCallId: String? = nil
+    ) {
         self.role = role
         self.content = content
         self.name = name
+        self.toolCalls = toolCalls
+        self.toolCallId = toolCallId
     }
 }
 
@@ -315,39 +353,151 @@ public struct ImageUrl: Codable, Sendable {
 }
 
 /// Represents a tool available for use in a chat request.
+///
+/// Example:
+/// ```swift
+/// let tool = Tool(function: FunctionDescription(
+///     name: "get_weather",
+///     description: "Get the current weather for a location",
+///     parameters: .object([
+///         "type": .string("object"),
+///         "properties": .object([
+///             "location": .object([
+///                 "type": .string("string"),
+///                 "description": .string("The city and state")
+///             ])
+///         ]),
+///         "required": .array([.string("location")])
+///     ])
+/// ))
+/// ```
 public struct Tool: Codable, Sendable {
-    /// The type of the tool.
+    /// The type of the tool. Currently always "function".
     public let type: String
-    
+
     /// The function associated with the tool.
     public let function: FunctionDescription
+
+    /// Creates a new tool.
+    ///
+    /// - Parameters:
+    ///   - type: The type of tool (default: "function")
+    ///   - function: The function description
+    public init(type: String = "function", function: FunctionDescription) {
+        self.type = type
+        self.function = function
+    }
 }
 
 /// Represents the function description of a tool.
+///
+/// The `parameters` field should be a JSON Schema object describing the function's parameters.
 public struct FunctionDescription: Codable, Sendable {
-    /// Optional description of the function.
-    public let description: String?
-    
     /// The name of the function.
     public let name: String
-    
-    /// Parameters for the function.
-    public let parameters: [String: String]
+
+    /// Optional description of what the function does.
+    public let description: String?
+
+    /// JSON Schema describing the function's parameters.
+    public let parameters: JSONValue
+
+    /// Whether to enable strict schema adherence (optional).
+    public let strict: Bool?
+
+    /// Creates a new function description.
+    ///
+    /// - Parameters:
+    ///   - name: The function name
+    ///   - description: Optional description of the function
+    ///   - parameters: JSON Schema for the function parameters
+    ///   - strict: Whether to enable strict schema adherence
+    public init(name: String, description: String? = nil, parameters: JSONValue, strict: Bool? = nil) {
+        self.name = name
+        self.description = description
+        self.parameters = parameters
+        self.strict = strict
+    }
 }
 
 /// Represents the choice of tools in a chat request.
+///
+/// Controls how the model selects tools:
+/// - `.none`: The model will not call any tools
+/// - `.auto`: The model decides whether to call tools (default behavior)
+/// - `.required`: The model must call at least one tool
+/// - `.function(name:)`: The model must call the specified function
 public enum ToolChoice: Codable, Sendable {
-    /// No tools should be used
+    /// No tools should be used.
     case none
-    /// Automatically choose tools
+    /// Automatically choose tools (default).
     case auto
-    /// Use a specific function
-    case function(Function)
+    /// The model must call at least one tool.
+    case required
+    /// Use a specific function by name.
+    case function(name: String)
 
-    /// Represents a specific function choice.
-    public struct Function: Codable, Sendable {
-        /// The name of the function.
-        public let name: String
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+
+        // Try decoding as a string first ("none", "auto", "required")
+        if let stringValue = try? container.decode(String.self) {
+            switch stringValue {
+            case "none":
+                self = .none
+            case "auto":
+                self = .auto
+            case "required":
+                self = .required
+            default:
+                throw DecodingError.dataCorruptedError(
+                    in: container,
+                    debugDescription: "Invalid tool choice string: \(stringValue)"
+                )
+            }
+            return
+        }
+
+        // Try decoding as an object {"type": "function", "function": {"name": "..."}}
+        let objectContainer = try decoder.container(keyedBy: ToolChoiceCodingKeys.self)
+        let type = try objectContainer.decode(String.self, forKey: .type)
+        if type == "function" {
+            let functionObj = try objectContainer.decode(ToolChoiceFunction.self, forKey: .function)
+            self = .function(name: functionObj.name)
+        } else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .type,
+                in: objectContainer,
+                debugDescription: "Invalid tool choice type: \(type)"
+            )
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        switch self {
+        case .none:
+            var container = encoder.singleValueContainer()
+            try container.encode("none")
+        case .auto:
+            var container = encoder.singleValueContainer()
+            try container.encode("auto")
+        case .required:
+            var container = encoder.singleValueContainer()
+            try container.encode("required")
+        case .function(let name):
+            var container = encoder.container(keyedBy: ToolChoiceCodingKeys.self)
+            try container.encode("function", forKey: .type)
+            try container.encode(ToolChoiceFunction(name: name), forKey: .function)
+        }
+    }
+
+    private enum ToolChoiceCodingKeys: String, CodingKey {
+        case type
+        case function
+    }
+
+    private struct ToolChoiceFunction: Codable, Sendable {
+        let name: String
     }
 }
 

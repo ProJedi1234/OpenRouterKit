@@ -571,7 +571,7 @@ struct ToolCallUnitTests {
 }
 
 @Suite("Tool Call Integration Tests",
-       .enabled(if: ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"] != nil))
+       .enabled(if: ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"]?.isEmpty == false))
 struct ToolCallIntegrationTests {
     let client: OpenRouterClient
 
@@ -586,7 +586,7 @@ struct ToolCallIntegrationTests {
 
         client = OpenRouterClient(
             apiKey: apiKey,
-            siteURL: "www.github.com",
+            siteURL: "https://github.com",
             siteName: "Swift OpenRouterKit Tool Call Tests",
             session: session
         )
@@ -622,9 +622,7 @@ struct ToolCallIntegrationTests {
 
         let response = try await client.chat.send(request: request)
 
-        #expect(response.choices.count >= 1, "Should have at least one choice")
-
-        let choice = response.choices[0]
+        let choice = try #require(response.choices.first, "Should have at least one choice")
 
         // The model should have made a tool call
         if choice.finish_reason == "tool_calls" {
@@ -668,13 +666,13 @@ struct ToolCallIntegrationTests {
 
             let finalResponse = try await client.chat.send(request: followUpRequest)
 
-            #expect(finalResponse.choices.count >= 1)
-            #expect(finalResponse.choices[0].message.content?.isEmpty == false,
+            let finalChoice = try #require(finalResponse.choices.first, "Final response should have at least one choice")
+            #expect(finalChoice.message.content?.isEmpty == false,
                    "Final response should have text content")
-            #expect(finalResponse.choices[0].finish_reason == "stop",
+            #expect(finalChoice.finish_reason == "stop",
                    "Final response should finish with stop")
 
-            print("Final response: \(finalResponse.choices[0].message.content ?? "")")
+            print("Final response: \(finalChoice.message.content ?? "")")
         } else {
             // Model responded with text instead of a tool call - this can happen
             // Just verify it's a valid response
@@ -713,9 +711,7 @@ struct ToolCallIntegrationTests {
 
         let response = try await client.chat.send(request: request)
 
-        #expect(response.choices.count >= 1)
-
-        let choice = response.choices[0]
+        let choice = try #require(response.choices.first, "Should have at least one choice")
 
         // With tool_choice: required, model must call a tool
         #expect(choice.finish_reason == "tool_calls",

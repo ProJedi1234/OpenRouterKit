@@ -14,7 +14,7 @@ import FoundationNetworking
 @testable import OpenRouterKit
 
 @Suite("Client Testing",
-       .enabled(if: ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"] != nil))
+       .enabled(if: ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"]?.isEmpty == false))
 struct OpenRouterClientTests {
     let client: OpenRouterClient
 
@@ -27,7 +27,7 @@ struct OpenRouterClientTests {
         let session = URLSession.shared
         #endif
 
-        client = OpenRouterClient(apiKey: apiKey, siteURL: "www.github.com", siteName: "Swift OpenRouterKit Tests", session: session)
+        client = OpenRouterClient(apiKey: apiKey, siteURL: "https://github.com", siteName: "Swift OpenRouterKit Tests", session: session)
     }
     
     @Test func testChatRequest() async throws {
@@ -37,16 +37,15 @@ struct OpenRouterClientTests {
         
         let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-7b-instruct:free")
         let response = try await client.chat.send(request: request)
-        
-        #expect(response.choices.count == 1, "Response should contain one choice")
-        #expect(response.choices[0].message.content?.isEmpty == false, "Response should contain a message")
+
+        let choice = try #require(response.choices.first, "Response should contain at least one choice")
+        #expect(choice.message.content?.isEmpty == false, "Response should contain a message")
     }
 
     @Test func testListModels() async throws {
         let response = try await client.models.list(category: nil, supportedParameters: nil, useRSS: nil, useRSSChatLinks: nil)
 
-        #expect(!response.data.isEmpty, "Models list should not be empty")
-        let firstModel = response.data[0]
+        let firstModel = try #require(response.data.first, "Models list should not be empty")
         #expect(!firstModel.id.isEmpty, "Model id should not be empty")
         #expect(!firstModel.name.isEmpty, "Model name should not be empty")
     }
@@ -54,8 +53,7 @@ struct OpenRouterClientTests {
     @Test func testListModelsForUser() async throws {
         let response = try await client.models.listForUser()
 
-        #expect(!response.data.isEmpty, "User models list should not be empty")
-        let firstModel = response.data[0]
+        let firstModel = try #require(response.data.first, "User models list should not be empty")
         #expect(!firstModel.id.isEmpty, "Model id should not be empty")
         #expect(!firstModel.name.isEmpty, "Model name should not be empty")
     }
@@ -94,7 +92,7 @@ struct OpenRouterClientTests {
         
         // Verify chunks didn't all arrive simultaneously
         let averageTimeBetweenChunks = timesBetweenChunks.reduce(0, +) / Double(timesBetweenChunks.count)
-        #expect(averageTimeBetweenChunks > 0.001, "Average time between chunks should be greater than 0.01 seconds")
+        #expect(averageTimeBetweenChunks > 0.001, "Average time between chunks should be greater than 0.001 seconds")
         
         print("Average time between chunks: \(averageTimeBetweenChunks) seconds")
         print("Number of chunks received: \(timesBetweenChunks.count + 1)")

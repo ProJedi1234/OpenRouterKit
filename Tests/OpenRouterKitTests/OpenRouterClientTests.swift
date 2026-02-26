@@ -13,21 +13,20 @@ import FoundationNetworking
 #endif
 @testable import OpenRouterKit
 
-@Suite("Client Testing")
+@Suite("Client Testing",
+       .enabled(if: ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"] != nil))
 struct OpenRouterClientTests {
-    var client: OpenRouterClient!
-    
-    init() async throws {
-        guard let apiKey = ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"] else {
-            fatalError("API key not found in environment variables")
-        }
-        
+    let client: OpenRouterClient
+
+    init() throws {
+        let apiKey = try #require(ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"])
+
         #if canImport(FoundationNetworking)
         let session = URLSession(configuration: .default)
         #else
         let session = URLSession.shared
         #endif
-        
+
         client = OpenRouterClient(apiKey: apiKey, siteURL: "www.github.com", siteName: "Swift OpenRouterKit Tests", session: session)
     }
     

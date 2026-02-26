@@ -300,9 +300,10 @@ struct ToolCallUnitTests {
         #expect(response.choices.count == 1)
         #expect(response.choices[0].finish_reason == "tool_calls")
         #expect(response.choices[0].message.content == nil, "Content should be null for tool calls")
-        #expect(response.choices[0].message.toolCalls?.count == 1)
+        let toolCalls = try #require(response.choices[0].message.toolCalls)
+        #expect(toolCalls.count == 1)
 
-        let toolCall = response.choices[0].message.toolCalls![0]
+        let toolCall = try #require(toolCalls.first)
         #expect(toolCall.id == "call_abc123")
         #expect(toolCall.type == "function")
         #expect(toolCall.function.name == "get_weather")
@@ -506,8 +507,9 @@ struct ToolCallUnitTests {
         let data = jsonString.data(using: .utf8)!
         let delta = try JSONDecoder().decode(StreamingDelta.self, from: data)
 
-        #expect(delta.choices[0].delta.toolCalls?.count == 1)
-        let toolCallDelta = delta.choices[0].delta.toolCalls![0]
+        let toolCallDeltas = try #require(delta.choices[0].delta.toolCalls)
+        #expect(toolCallDeltas.count == 1)
+        let toolCallDelta = try #require(toolCallDeltas.first)
         #expect(toolCallDelta.index == 0)
         #expect(toolCallDelta.id == "call_stream1")
         #expect(toolCallDelta.type == "function")
@@ -542,7 +544,8 @@ struct ToolCallUnitTests {
         let data = jsonString.data(using: .utf8)!
         let delta = try JSONDecoder().decode(StreamingDelta.self, from: data)
 
-        let toolCallDelta = delta.choices[0].delta.toolCalls![0]
+        let continuationDeltas = try #require(delta.choices[0].delta.toolCalls)
+        let toolCallDelta = try #require(continuationDeltas.first)
         #expect(toolCallDelta.index == 0)
         #expect(toolCallDelta.id == nil, "Continuation chunk should not have id")
         #expect(toolCallDelta.function?.arguments == "ation\":\"NYC\"}")
@@ -567,14 +570,13 @@ struct ToolCallUnitTests {
     }
 }
 
-@Suite("Tool Call Integration Tests")
+@Suite("Tool Call Integration Tests",
+       .enabled(if: ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"] != nil))
 struct ToolCallIntegrationTests {
-    var client: OpenRouterClient!
+    let client: OpenRouterClient
 
-    init() async throws {
-        guard let apiKey = ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"] else {
-            fatalError("API key not found in environment variables")
-        }
+    init() throws {
+        let apiKey = try #require(ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"])
 
         #if canImport(FoundationNetworking)
         let session = URLSession(configuration: .default)
@@ -626,10 +628,10 @@ struct ToolCallIntegrationTests {
 
         // The model should have made a tool call
         if choice.finish_reason == "tool_calls" {
-            #expect(choice.message.toolCalls != nil, "Should have tool_calls")
-            #expect(choice.message.toolCalls!.count >= 1, "Should have at least one tool call")
+            let toolCalls = try #require(choice.message.toolCalls, "Should have tool_calls")
+            #expect(toolCalls.count >= 1, "Should have at least one tool call")
 
-            let toolCall = choice.message.toolCalls![0]
+            let toolCall = try #require(toolCalls.first)
             #expect(toolCall.function.name == "get_weather", "Should call get_weather")
             #expect(!toolCall.id.isEmpty, "Tool call should have an ID")
             #expect(!toolCall.function.arguments.isEmpty, "Tool call should have arguments")
@@ -647,7 +649,7 @@ struct ToolCallIntegrationTests {
             conversationMessages.append(Message(
                 role: .assistant,
                 content: nil,
-                toolCalls: choice.message.toolCalls!
+                toolCalls: toolCalls
             ))
 
             // Add the tool result
@@ -718,11 +720,11 @@ struct ToolCallIntegrationTests {
         // With tool_choice: required, model must call a tool
         #expect(choice.finish_reason == "tool_calls",
                "With required tool_choice, finish_reason should be tool_calls")
-        #expect(choice.message.toolCalls != nil,
+        let toolCalls = try #require(choice.message.toolCalls,
                "With required tool_choice, should have tool_calls")
-        #expect(choice.message.toolCalls!.count >= 1)
+        #expect(toolCalls.count >= 1)
 
-        let toolCall = choice.message.toolCalls![0]
+        let toolCall = try #require(toolCalls.first)
         #expect(toolCall.function.name == "calculate",
                "Should call the calculate function")
 

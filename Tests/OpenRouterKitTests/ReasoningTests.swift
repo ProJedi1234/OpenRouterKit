@@ -176,21 +176,20 @@ struct ReasoningTests {
     }
 }
 
-@Suite("Reasoning Integration Tests")
+@Suite("Reasoning Integration Tests",
+       .enabled(if: ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"] != nil))
 struct ReasoningIntegrationTests {
-    var client: OpenRouterClient!
-    
-    init() async throws {
-        guard let apiKey = ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"] else {
-            fatalError("API key not found in environment variables")
-        }
-        
+    let client: OpenRouterClient
+
+    init() throws {
+        let apiKey = try #require(ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"])
+
         #if canImport(FoundationNetworking)
         let session = URLSession(configuration: .default)
         #else
         let session = URLSession.shared
         #endif
-        
+
         client = OpenRouterClient(
             apiKey: apiKey,
             siteURL: "www.github.com",

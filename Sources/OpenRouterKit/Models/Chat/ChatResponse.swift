@@ -27,17 +27,28 @@ public struct ChatResponse: Codable, Sendable {
     public struct Choice: Codable, Sendable {
         /// The generated message.
         public var message: Message
-        
+
         /// Reason why the completion finished.
+        /// Will be "tool_calls" when the model wants to call tools.
         public var finish_reason: String?
-        
+
         /// Represents a message in the response.
         public struct Message: Codable, Sendable {
             /// Role of the message sender.
             public var role: String
-            
-            /// Content of the message.
-            public var content: String
+
+            /// Content of the message. May be null when the model makes tool calls.
+            public var content: String?
+
+            /// Tool calls requested by the model.
+            /// Present when the model decides to call one or more tools.
+            public var toolCalls: [ToolCall]?
+
+            enum CodingKeys: String, CodingKey {
+                case role
+                case content
+                case toolCalls = "tool_calls"
+            }
         }
     }
     

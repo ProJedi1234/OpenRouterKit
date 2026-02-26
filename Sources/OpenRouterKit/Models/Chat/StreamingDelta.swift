@@ -50,9 +50,18 @@ public struct StreamingDelta: Codable {
         public struct Delta: Codable {
             /// Role of the message (if present).
             public var role: String?
-            
+
             /// Content delta (new text chunk).
             public var content: String?
+
+            /// Tool call deltas. During streaming, tool calls arrive incrementally.
+            public var toolCalls: [ToolCallDelta]?
+
+            enum CodingKeys: String, CodingKey {
+                case role
+                case content
+                case toolCalls = "tool_calls"
+            }
         }
     }
     

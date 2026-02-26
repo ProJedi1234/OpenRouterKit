@@ -170,192 +170,11 @@ public struct ChatRequest: Codable, Sendable {
     }
 }
 
-/// Represents a message within a chat request.
-///
-/// Messages are the building blocks of a conversation with the model.
-public struct Message: Codable, Sendable {
-    /// The role of the sender.
-    public var role: Role
-    
-    /// The content of the message.
-    public var content: StringOrContentPart
-
-    /// Optional name for identifying the sender.
-    public var name: String?
-
-    /// The role enum representing the sender's role.
-    public enum Role: String, Codable, Sendable {
-        /// User message
-        case user
-        /// Assistant message
-        case assistant
-        /// System message
-        case system
-        /// Tool message
-        case tool
-    }
-    
-    /// Creates a new message.
-    ///
-    /// - Parameters:
-    ///   - role: The role of the message sender
-    ///   - content: The message content (string or content parts)
-    ///   - name: Optional name for the sender
-    public init(role: Role, content: StringOrContentPart, name: String? = nil) {
-        self.role = role
-        self.content = content
-        self.name = name
-    }
-}
-
-/// Represents the content of a message, which can be either a string or an array of content parts.
-public enum StringOrContentPart: Codable, Sendable {
-    /// Simple string content
-    case string(String)
-    /// Array of content parts (text, images, etc.)
-    case contentParts([ContentPart])
-
-    enum CodingKeys: String, CodingKey {
-        case type
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        if let stringValue = try? container.decode(String.self) {
-            self = .string(stringValue)
-        } else if let contentPartsValue = try? container.decode([ContentPart].self) {
-            self = .contentParts(contentPartsValue)
-        } else {
-            throw DecodingError.typeMismatch(StringOrContentPart.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Failed to decode StringOrContentPart"))
-        }
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        switch self {
-        case .string(let value):
-            try container.encode(value)
-        case .contentParts(let value):
-            try container.encode(value)
-        }
-    }
-}
-
-/// Represents the content of a message, which can be either text or an image.
-public enum ContentPart: Codable, Sendable {
-    /// Text content
-    case text(TextContent)
-    /// Image content
-    case image(ImageContentPart)
-
-    enum CodingKeys: String, CodingKey {
-        case type
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let type = try container.decode(String.self, forKey: .type)
-        
-        switch type {
-        case "text":
-            let textContent = try TextContent(from: decoder)
-            self = .text(textContent)
-        case "image_url":
-            let imageContent = try ImageContentPart(from: decoder)
-            self = .image(imageContent)
-        default:
-            throw DecodingError.dataCorruptedError(forKey: .type, in: container,
-                debugDescription: "Invalid type: \(type)")
-        }
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        switch self {
-        case .text(let textContent):
-            try container.encode("text", forKey: .type)
-            try textContent.encode(to: encoder)
-        case .image(let imageContent):
-            try container.encode("image_url", forKey: .type)
-            try imageContent.encode(to: encoder)
-        }
-    }
-}
-
-/// Represents text content in a chat request.
-public struct TextContent: Codable, Sendable {
-    /// The type of content, should be "text".
-    public let type: String
-    
-    /// The actual text content.
-    public let text: String
-}
-
-/// Represents image content in a chat request.
-public struct ImageContentPart: Codable, Sendable {
-    /// The type of content, should be "image_url".
-    public let type: String
-    
-    /// The URL of the image.
-    public let imageURL: ImageUrl
-
-    enum CodingKeys: String, CodingKey {
-        case type
-        case imageURL = "image_url"
-    }
-}
-
-/// Represents an image URL and optional detail in a chat request.
-public struct ImageUrl: Codable, Sendable {
-    /// The image URL or base64 encoded image data.
-    public let url: String
-    
-    /// Optional detail string for the image.
-    public let detail: String?
-}
-
-/// Represents a tool available for use in a chat request.
-public struct Tool: Codable, Sendable {
-    /// The type of the tool.
-    public let type: String
-    
-    /// The function associated with the tool.
-    public let function: FunctionDescription
-}
-
-/// Represents the function description of a tool.
-public struct FunctionDescription: Codable, Sendable {
-    /// Optional description of the function.
-    public let description: String?
-    
-    /// The name of the function.
-    public let name: String
-    
-    /// Parameters for the function.
-    public let parameters: [String: String]
-}
-
-/// Represents the choice of tools in a chat request.
-public enum ToolChoice: Codable, Sendable {
-    /// No tools should be used
-    case none
-    /// Automatically choose tools
-    case auto
-    /// Use a specific function
-    case function(Function)
-
-    /// Represents a specific function choice.
-    public struct Function: Codable, Sendable {
-        /// The name of the function.
-        public let name: String
-    }
-}
-
 /// Represents the format of the response from the OpenRouter API.
 public struct ResponseFormat: Codable, Sendable {
     /// The type of the response format.
     public let type: String
-    
+
     /// Creates a new response format.
     ///
     /// - Parameter type: The format type (e.g., "json_object")
@@ -368,36 +187,11 @@ public struct ResponseFormat: Codable, Sendable {
 public struct ProviderPreferences: Codable, Sendable {
     /// Ordered list of preferred providers.
     public let order: [String]
-    
+
     /// Creates new provider preferences.
     ///
     /// - Parameter order: Ordered list of provider names
     public init(order: [String]) {
         self.order = order
     }
-}
-
-/// Represents reasoning configuration for advanced reasoning capabilities.
-public struct ReasoningConfiguration: Codable, Sendable {
-    /// The effort level for reasoning.
-    public var effort: ReasoningEffort
-    
-    /// Creates a new reasoning configuration.
-    ///
-    /// - Parameter effort: The reasoning effort level
-    public init(effort: ReasoningEffort) {
-        self.effort = effort
-    }
-}
-
-/// Represents the effort level for reasoning.
-public enum ReasoningEffort: String, Codable, Sendable {
-    /// Basic reasoning with minimal computational effort.
-    case minimal
-    /// Light reasoning for simple problems.
-    case low
-    /// Balanced reasoning for moderate complexity.
-    case medium
-    /// Deep reasoning for complex problems.
-    case high
 }

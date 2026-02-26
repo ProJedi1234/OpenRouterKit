@@ -176,24 +176,23 @@ struct ReasoningTests {
     }
 }
 
-@Suite("Reasoning Integration Tests")
+@Suite("Reasoning Integration Tests",
+       .enabled(if: ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"]?.isEmpty == false))
 struct ReasoningIntegrationTests {
-    var client: OpenRouterClient!
-    
-    init() async throws {
-        guard let apiKey = ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"] else {
-            fatalError("API key not found in environment variables")
-        }
-        
+    let client: OpenRouterClient
+
+    init() throws {
+        let apiKey = try #require(ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"])
+
         #if canImport(FoundationNetworking)
         let session = URLSession(configuration: .default)
         #else
         let session = URLSession.shared
         #endif
-        
+
         client = OpenRouterClient(
             apiKey: apiKey,
-            siteURL: "www.github.com",
+            siteURL: "https://github.com",
             siteName: "Swift OpenRouterKit Reasoning Tests",
             session: session
         )
@@ -214,16 +213,16 @@ struct ReasoningIntegrationTests {
             reasoning: ReasoningConfiguration(effort: .minimal)
         )
         
-        let response = try await client.sendChatRequest(request: request)
-        
-        #expect(response.choices.count == 1, "Response should contain one choice")
-        #expect(!response.choices[0].message.content.isEmpty, "Response should contain a message")
-        
+        let response = try await client.chat.send(request: request)
+
+        let choice = try #require(response.choices.first, "Response should contain at least one choice")
+        #expect(choice.message.content?.isEmpty == false, "Response should contain a message")
+
         // Verify usage information is present
         #expect(response.usage != nil, "Response should contain usage information")
         if let usage = response.usage {
             #expect(usage.total_tokens > 0, "Should have token usage")
-            
+
             // Note: reasoning_tokens may or may not be present depending on model response
             // This is expected behavior - some models may not return reasoning tokens
             print("Usage: \(usage.prompt_tokens) prompt + \(usage.completion_tokens) completion = \(usage.total_tokens) total")
@@ -232,29 +231,29 @@ struct ReasoningIntegrationTests {
             }
         }
     }
-    
+
     @Test("Chat request with reasoning - high effort")
     func testChatRequestWithReasoningHigh() async throws {
         let messages: [Message] = [
             .init(role: .user, content: .string("Calculate 15 * 23. Explain each step."))
         ]
-        
+
         let request = OpenRouterRequest(
             messages: messages,
             model: "openai/gpt-oss-20b:free",
             maxTokens: 1500,
             reasoning: ReasoningConfiguration(effort: .high)
         )
-        
-        let response = try await client.sendChatRequest(request: request)
-        
-        #expect(response.choices.count == 1, "Response should contain one choice")
-        #expect(!response.choices[0].message.content.isEmpty, "Response should contain a message")
+
+        let response = try await client.chat.send(request: request)
+
+        let choice = try #require(response.choices.first, "Response should contain at least one choice")
+        #expect(choice.message.content?.isEmpty == false, "Response should contain a message")
         #expect(response.usage != nil, "Response should contain usage information")
-        
+
         print("Response with high effort reasoning:")
-        print(response.choices[0].message.content)
-        
+        print(choice.message.content ?? "")
+
         if let usage = response.usage {
             print("\nToken usage - Total: \(usage.total_tokens)")
             if let reasoningTokens = usage.output_tokens_details?.reasoning_tokens {
@@ -281,7 +280,7 @@ struct ReasoningIntegrationTests {
             reasoning: ReasoningConfiguration(effort: .medium)
         )
         
-        let stream = client.streamChatRequest(request: request)
+        let stream = client.chat.stream(request: request)
         
         var chunkCount = 0
         for await text in stream {
@@ -320,13 +319,13 @@ struct ReasoningIntegrationTests {
                 reasoning: ReasoningConfiguration(effort: effort)
             )
             
-            let response = try await client.sendChatRequest(request: request)
-            
-            #expect(response.choices.count == 1, "Response with \(name) effort should contain one choice")
-            #expect(!response.choices[0].message.content.isEmpty, "Response should contain content")
-            
+            let response = try await client.chat.send(request: request)
+
+            let choice = try #require(response.choices.first, "Response with \(name) effort should contain at least one choice")
+            #expect(choice.message.content?.isEmpty == false, "Response should contain content")
+
             print("\nEffort level: \(name)")
-            print("Response: \(response.choices[0].message.content)")
+            print("Response: \(choice.message.content ?? "")")
             if let usage = response.usage {
                 print("Tokens: \(usage.total_tokens)")
                 if let reasoningTokens = usage.output_tokens_details?.reasoning_tokens {
@@ -349,11 +348,11 @@ struct ReasoningIntegrationTests {
             // No reasoning parameter
         )
         
-        let response = try await client.sendChatRequest(request: request)
-        
-        #expect(response.choices.count == 1, "Response should work without reasoning")
-        #expect(!response.choices[0].message.content.isEmpty, "Response should contain a message")
-        
-        print("Response without reasoning: \(response.choices[0].message.content)")
+        let response = try await client.chat.send(request: request)
+
+        let choice = try #require(response.choices.first, "Response should contain at least one choice")
+        #expect(choice.message.content?.isEmpty == false, "Response should contain a message")
+
+        print("Response without reasoning: \(choice.message.content ?? "")")
     }
 }

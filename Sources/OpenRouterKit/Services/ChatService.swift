@@ -41,5 +41,24 @@ final class ChatService: ChatServiceProtocol {
             }
         }
     }
+
+    @available(iOS 15.0, macOS 12.0, *)
+    func streamEvents(request: ChatRequest) -> AsyncStream<ChatStreamEvent> {
+        return AsyncStream { continuation in
+            Task {
+                do {
+                    var streamingRequest = request
+                    streamingRequest.stream = true
+                    let stream = try await httpClient.streamEvents(.chatCompletions(streamingRequest))
+                    for await event in stream {
+                        continuation.yield(event)
+                    }
+                    continuation.finish()
+                } catch {
+                    continuation.finish()
+                }
+            }
+        }
+    }
     #endif
 }

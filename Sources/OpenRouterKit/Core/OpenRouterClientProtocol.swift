@@ -40,6 +40,18 @@ public protocol ChatServiceProtocol: Sendable {
     /// - Note: Streaming is only available on Darwin platforms (macOS, iOS, etc.)
     @available(iOS 15.0, macOS 12.0, *)
     func stream(request: ChatRequest) -> AsyncStream<String>
+
+    /// Streams a chat completion response as structured events.
+    ///
+    /// Unlike ``stream(request:)`` which only returns text content, this method
+    /// surfaces text chunks, tool call deltas, and finish reasons as
+    /// ``ChatStreamEvent`` values.
+    ///
+    /// - Parameter request: The chat request to stream
+    /// - Returns: An AsyncStream of ChatStreamEvent values
+    /// - Note: Streaming is only available on Darwin platforms (macOS, iOS, etc.)
+    @available(iOS 15.0, macOS 12.0, *)
+    func streamEvents(request: ChatRequest) -> AsyncStream<ChatStreamEvent>
     #endif
 }
 

@@ -35,7 +35,7 @@ struct OpenRouterClientTests {
             .init(role: .user, content: .string("Tell me a joke"))
         ]
         
-        let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-7b-instruct:free")
+        let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-small-3.1-24b-instruct:free")
         let response = try await client.chat.send(request: request)
 
         let choice = try #require(response.choices.first, "Response should contain at least one choice")
@@ -67,7 +67,7 @@ struct OpenRouterClientTests {
         var lastChunkTime = Date()
         var timesBetweenChunks: [TimeInterval] = []
         
-        let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-7b-instruct:free", stream: true)
+        let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-small-3.1-24b-instruct:free", stream: true)
         let stream = client.chat.stream(request: request)
         
         for await text in stream {

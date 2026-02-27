@@ -24,41 +24,17 @@ final class ChatService: ChatServiceProtocol {
 
     #if canImport(Darwin)
     @available(iOS 15.0, macOS 12.0, *)
-    func stream(request: ChatRequest) -> AsyncStream<String> {
-        return AsyncStream { continuation in
-            Task {
-                do {
-                    var streamingRequest = request
-                    streamingRequest.stream = true
-                    let stream = try await httpClient.stream(.chatCompletions(streamingRequest))
-                    for await chunk in stream {
-                        continuation.yield(chunk)
-                    }
-                    continuation.finish()
-                } catch {
-                    continuation.finish()
-                }
-            }
-        }
+    func stream(request: ChatRequest) async throws -> AsyncThrowingStream<String, Error> {
+        var streamingRequest = request
+        streamingRequest.stream = true
+        return try await httpClient.stream(.chatCompletions(streamingRequest))
     }
 
     @available(iOS 15.0, macOS 12.0, *)
-    func streamEvents(request: ChatRequest) -> AsyncStream<ChatStreamEvent> {
-        return AsyncStream { continuation in
-            Task {
-                do {
-                    var streamingRequest = request
-                    streamingRequest.stream = true
-                    let stream = try await httpClient.streamEvents(.chatCompletions(streamingRequest))
-                    for await event in stream {
-                        continuation.yield(event)
-                    }
-                    continuation.finish()
-                } catch {
-                    continuation.finish()
-                }
-            }
-        }
+    func streamEvents(request: ChatRequest) async throws -> AsyncThrowingStream<ChatStreamEvent, Error> {
+        var streamingRequest = request
+        streamingRequest.stream = true
+        return try await httpClient.streamEvents(.chatCompletions(streamingRequest))
     }
     #endif
 }

@@ -15,7 +15,7 @@ import Foundation
 /// Example:
 /// ```swift
 /// var accumulator = ToolCallAccumulator()
-/// for await event in client.chat.streamEvents(request: request) {
+/// for try await event in try await client.chat.streamEvents(request: request) {
 ///     switch event {
 ///     case .text(let text):
 ///         print(text, terminator: "")

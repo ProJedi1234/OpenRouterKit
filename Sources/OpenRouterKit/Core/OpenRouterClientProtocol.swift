@@ -35,23 +35,25 @@ public protocol ChatServiceProtocol: Sendable {
     /// Streams a chat completion response.
     ///
     /// - Parameter request: The chat request to stream
-    /// - Returns: An AsyncStream of String chunks
+    /// - Returns: An AsyncThrowingStream of String chunks
     /// - Throws: OpenRouterError if the request fails
     /// - Note: Streaming is only available on Darwin platforms (macOS, iOS, etc.)
     @available(iOS 15.0, macOS 12.0, *)
-    func stream(request: ChatRequest) -> AsyncStream<String>
+    func stream(request: ChatRequest) async throws -> AsyncThrowingStream<String, Error>
 
     /// Streams a chat completion response as structured events.
     ///
     /// Unlike ``stream(request:)`` which only returns text content, this method
     /// surfaces text chunks, tool call deltas, and finish reasons as
-    /// ``ChatStreamEvent`` values.
+    /// ``ChatStreamEvent`` values. Errors during streaming are propagated
+    /// through the throwing stream rather than silently finishing.
     ///
     /// - Parameter request: The chat request to stream
-    /// - Returns: An AsyncStream of ChatStreamEvent values
+    /// - Returns: An AsyncThrowingStream of ChatStreamEvent values
+    /// - Throws: OpenRouterError if the initial request fails
     /// - Note: Streaming is only available on Darwin platforms (macOS, iOS, etc.)
     @available(iOS 15.0, macOS 12.0, *)
-    func streamEvents(request: ChatRequest) -> AsyncStream<ChatStreamEvent>
+    func streamEvents(request: ChatRequest) async throws -> AsyncThrowingStream<ChatStreamEvent, Error>
     #endif
 }
 

@@ -928,8 +928,8 @@ struct ToolCallIntegrationTests {
         var finishReason: String?
         var textChunks: [String] = []
 
-        let stream = client.chat.streamEvents(request: request)
-        for await event in stream {
+        let stream = try await client.chat.streamEvents(request: request)
+        for try await event in stream {
             switch event {
             case .text(let text):
                 textChunks.append(text)

@@ -14,7 +14,7 @@ import Foundation
 ///
 /// ```swift
 /// var accumulator = ToolCallAccumulator()
-/// for await event in stream {
+/// for try await event in stream {
 ///     if case .toolCallDelta(let delta) = event {
 ///         accumulator.accumulate(delta)
 ///     }

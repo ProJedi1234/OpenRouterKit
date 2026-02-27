@@ -66,7 +66,7 @@ public struct StreamingDelta: Codable {
     }
     
     /// Represents token usage statistics.
-    public struct Usage: Codable {
+    public struct Usage: Codable, Sendable {
         /// Number of tokens in the prompt.
         public var prompt_tokens: Int
         
@@ -80,7 +80,7 @@ public struct StreamingDelta: Codable {
         public var output_tokens_details: OutputTokensDetails?
         
         /// Detailed breakdown of output tokens.
-        public struct OutputTokensDetails: Codable {
+        public struct OutputTokensDetails: Codable, Sendable {
             /// Number of tokens used for reasoning (if applicable).
             public var reasoning_tokens: Int?
         }

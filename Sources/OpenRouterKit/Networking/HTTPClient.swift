@@ -26,11 +26,20 @@ protocol HTTPClient: Sendable {
     /// Streams a response from an HTTP request.
     ///
     /// - Parameter endpoint: The endpoint to stream from
-    /// - Returns: An AsyncStream of String chunks
+    /// - Returns: An AsyncThrowingStream of String chunks
     /// - Throws: OpenRouterError or URLError if the request fails
     /// - Note: Streaming is only available on Darwin platforms (macOS, iOS, etc.)
     @available(iOS 15.0, macOS 12.0, *)
-    func stream(_ endpoint: Endpoint) async throws -> AsyncStream<String>
+    func stream(_ endpoint: Endpoint) async throws -> AsyncThrowingStream<String, Error>
+
+    /// Streams a response as structured events from an HTTP request.
+    ///
+    /// - Parameter endpoint: The endpoint to stream from
+    /// - Returns: An AsyncThrowingStream of ChatStreamEvent values
+    /// - Throws: OpenRouterError or URLError if the request fails
+    /// - Note: Streaming is only available on Darwin platforms (macOS, iOS, etc.)
+    @available(iOS 15.0, macOS 12.0, *)
+    func streamEvents(_ endpoint: Endpoint) async throws -> AsyncThrowingStream<ChatStreamEvent, Error>
     #endif
 }
 
@@ -78,42 +87,68 @@ final class URLSessionHTTPClient: HTTPClient {
 
     #if canImport(Darwin)
     @available(iOS 15.0, macOS 12.0, *)
-    func stream(_ endpoint: Endpoint) async throws -> AsyncStream<String> {
-        return AsyncStream { continuation in
-            Task {
+    func streamEvents(_ endpoint: Endpoint) async throws -> AsyncThrowingStream<ChatStreamEvent, Error> {
+        try await streamMapped(endpoint, transform: Self.processLineAsEvents)
+    }
+
+    @available(iOS 15.0, macOS 12.0, *)
+    func stream(_ endpoint: Endpoint) async throws -> AsyncThrowingStream<String, Error> {
+        try await streamMapped(endpoint) { line in
+            Self.processLine(line).map { [$0] } ?? []
+        }
+    }
+
+    /// Shared streaming infrastructure for SSE endpoints.
+    ///
+    /// Handles request setup, HTTP status checking, byte-level line buffering
+    /// (with correct multi-byte UTF-8 support), task cancellation on termination,
+    /// and error propagation through the throwing stream.
+    ///
+    /// - Parameters:
+    ///   - endpoint: The endpoint to stream from
+    ///   - transform: Converts each SSE line into zero or more output values
+    /// - Returns: An AsyncThrowingStream of transformed values
+    @available(iOS 15.0, macOS 12.0, *)
+    private func streamMapped<T: Sendable>(
+        _ endpoint: Endpoint,
+        transform: @escaping @Sendable (String) -> [T]
+    ) async throws -> AsyncThrowingStream<T, Error> {
+        let request = try requestBuilder.build(endpoint)
+        let (bytes, response) = try await session.bytes(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+
+        if httpResponse.statusCode != 200 {
+            let errorData = try await bytes.reduce(into: Data()) { data, byte in
+                data.append(byte)
+            }
+            let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: errorData)
+            throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
+        }
+
+        return AsyncThrowingStream { continuation in
+            let task = Task {
                 do {
-                    let request = try requestBuilder.build(endpoint)
-                    let (bytes, response) = try await session.bytes(for: request)
-
-                    guard let httpResponse = response as? HTTPURLResponse else {
-                        throw URLError(.badServerResponse)
-                    }
-
-                    if httpResponse.statusCode != 200 {
-                        let errorData = try await bytes.reduce(into: Data()) { data, byte in
-                            data.append(byte)
-                        }
-                        let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: errorData)
-                        throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
-                    }
-
-                    var buffer = ""
+                    var buffer = Data()
                     for try await byte in bytes {
-                        if let char = String(bytes: [byte], encoding: .utf8) {
-                            buffer += char
-                            if char == "\n" {
-                                if let processedLine = Self.processLine(buffer) {
-                                    continuation.yield(processedLine)
-                                }
-                                buffer = ""
+                        buffer.append(byte)
+                        if byte == UInt8(ascii: "\n") {
+                            let line = String(decoding: buffer, as: UTF8.self)
+                            for value in transform(line) {
+                                continuation.yield(value)
                             }
+                            buffer.removeAll(keepingCapacity: true)
                         }
                     }
-
                     continuation.finish()
                 } catch {
-                    continuation.finish()
+                    continuation.finish(throwing: error)
                 }
+            }
+            continuation.onTermination = { @Sendable _ in
+                task.cancel()
             }
         }
     }
@@ -131,5 +166,34 @@ final class URLSessionHTTPClient: HTTPClient {
               !content.isEmpty else { return nil }
 
         return content
+    }
+
+    static func processLineAsEvents(_ line: String) -> [ChatStreamEvent] {
+        let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedLine.isEmpty, trimmedLine.hasPrefix("data: ") else { return [] }
+
+        let jsonString = String(trimmedLine.dropFirst(6))
+        guard jsonString != "[DONE]",
+              let jsonData = jsonString.data(using: .utf8),
+              let delta = try? JSONDecoder().decode(StreamingDelta.self, from: jsonData),
+              let choice = delta.choices.first else { return [] }
+
+        var events: [ChatStreamEvent] = []
+
+        if let content = choice.delta.content, !content.isEmpty {
+            events.append(.text(content))
+        }
+
+        if let toolCallDeltas = choice.delta.toolCalls {
+            for toolCallDelta in toolCallDeltas {
+                events.append(.toolCallDelta(toolCallDelta))
+            }
+        }
+
+        if let finishReason = choice.finish_reason {
+            events.append(.finished(finishReason: finishReason, usage: delta.usage))
+        }
+
+        return events
     }
 }

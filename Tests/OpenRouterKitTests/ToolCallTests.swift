@@ -551,6 +551,172 @@ struct ToolCallUnitTests {
         #expect(toolCallDelta.function?.arguments == "ation\":\"NYC\"}")
     }
 
+    // MARK: - ToolCallAccumulator Tests
+
+    @Test("ToolCallAccumulator assembles a single tool call")
+    func testAccumulatorSingleToolCall() {
+        var accumulator = ToolCallAccumulator()
+
+        // First delta: id, type, function name, and partial arguments
+        accumulator.accumulate(ToolCallDelta(
+            index: 0,
+            id: "call_abc",
+            type: "function",
+            function: ToolCallFunctionDelta(name: "get_weather", arguments: "{\"loc")
+        ))
+
+        // Continuation: more arguments
+        accumulator.accumulate(ToolCallDelta(
+            index: 0,
+            function: ToolCallFunctionDelta(arguments: "ation\":\"NYC\"}")
+        ))
+
+        let calls = accumulator.toolCalls
+        #expect(calls.count == 1)
+        #expect(calls[0].id == "call_abc")
+        #expect(calls[0].type == "function")
+        #expect(calls[0].function.name == "get_weather")
+        #expect(calls[0].function.arguments == "{\"location\":\"NYC\"}")
+    }
+
+    @Test("ToolCallAccumulator assembles multiple interleaved tool calls")
+    func testAccumulatorMultipleToolCalls() {
+        var accumulator = ToolCallAccumulator()
+
+        // First tool call start
+        accumulator.accumulate(ToolCallDelta(
+            index: 0,
+            id: "call_1",
+            type: "function",
+            function: ToolCallFunctionDelta(name: "get_weather", arguments: "{\"city\":")
+        ))
+
+        // Second tool call start
+        accumulator.accumulate(ToolCallDelta(
+            index: 1,
+            id: "call_2",
+            type: "function",
+            function: ToolCallFunctionDelta(name: "get_time", arguments: "{\"tz\":")
+        ))
+
+        // First tool call continuation
+        accumulator.accumulate(ToolCallDelta(
+            index: 0,
+            function: ToolCallFunctionDelta(arguments: "\"NYC\"}")
+        ))
+
+        // Second tool call continuation
+        accumulator.accumulate(ToolCallDelta(
+            index: 1,
+            function: ToolCallFunctionDelta(arguments: "\"EST\"}")
+        ))
+
+        let calls = accumulator.toolCalls
+        #expect(calls.count == 2)
+
+        #expect(calls[0].id == "call_1")
+        #expect(calls[0].function.name == "get_weather")
+        #expect(calls[0].function.arguments == "{\"city\":\"NYC\"}")
+
+        #expect(calls[1].id == "call_2")
+        #expect(calls[1].function.name == "get_time")
+        #expect(calls[1].function.arguments == "{\"tz\":\"EST\"}")
+    }
+
+    @Test("ToolCallAccumulator reset clears state")
+    func testAccumulatorReset() {
+        var accumulator = ToolCallAccumulator()
+
+        accumulator.accumulate(ToolCallDelta(
+            index: 0,
+            id: "call_1",
+            type: "function",
+            function: ToolCallFunctionDelta(name: "func1", arguments: "{}")
+        ))
+
+        #expect(accumulator.toolCalls.count == 1)
+
+        accumulator.reset()
+        #expect(accumulator.toolCalls.isEmpty)
+    }
+
+    // MARK: - processLineAsEvents Tests
+
+    @Test("processLineAsEvents extracts text content")
+    func testProcessLineAsEventsText() {
+        let line = "data: {\"id\":\"gen-1\",\"choices\":[{\"delta\":{\"content\":\"Hello\"},\"index\":0}]}\n"
+        let events = URLSessionHTTPClient.processLineAsEvents(line)
+
+        #expect(events.count == 1)
+        if case .text(let text) = events[0] {
+            #expect(text == "Hello")
+        } else {
+            Issue.record("Expected .text event")
+        }
+    }
+
+    @Test("processLineAsEvents extracts tool call deltas")
+    func testProcessLineAsEventsToolCall() {
+        let line = """
+        data: {"id":"gen-1","choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"get_weather","arguments":"{\\"loc"}}]},"index":0}]}
+        """
+        let events = URLSessionHTTPClient.processLineAsEvents(line)
+
+        #expect(events.count == 1)
+        if case .toolCallDelta(let delta) = events[0] {
+            #expect(delta.index == 0)
+            #expect(delta.id == "call_1")
+            #expect(delta.function?.name == "get_weather")
+        } else {
+            Issue.record("Expected .toolCallDelta event")
+        }
+    }
+
+    @Test("processLineAsEvents extracts finish reason")
+    func testProcessLineAsEventsFinished() {
+        let line = """
+        data: {"id":"gen-1","choices":[{"delta":{},"index":0,"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}
+        """
+        let events = URLSessionHTTPClient.processLineAsEvents(line)
+
+        #expect(events.count == 1)
+        if case .finished(let reason, let usage) = events[0] {
+            #expect(reason == "tool_calls")
+            #expect(usage?.prompt_tokens == 10)
+            #expect(usage?.total_tokens == 15)
+        } else {
+            Issue.record("Expected .finished event")
+        }
+    }
+
+    @Test("processLineAsEvents returns empty for non-data lines")
+    func testProcessLineAsEventsIgnoresNonData() {
+        #expect(URLSessionHTTPClient.processLineAsEvents("").isEmpty)
+        #expect(URLSessionHTTPClient.processLineAsEvents(": comment\n").isEmpty)
+        #expect(URLSessionHTTPClient.processLineAsEvents("data: [DONE]\n").isEmpty)
+    }
+
+    @Test("processLineAsEvents returns multiple events from one line")
+    func testProcessLineAsEventsMultipleEvents() {
+        // A line with both text content and a finish reason
+        let line = """
+        data: {"id":"gen-1","choices":[{"delta":{"content":"done"},"index":0,"finish_reason":"stop"}]}
+        """
+        let events = URLSessionHTTPClient.processLineAsEvents(line)
+
+        #expect(events.count == 2)
+        if case .text(let text) = events[0] {
+            #expect(text == "done")
+        } else {
+            Issue.record("Expected .text event first")
+        }
+        if case .finished(let reason, _) = events[1] {
+            #expect(reason == "stop")
+        } else {
+            Issue.record("Expected .finished event second")
+        }
+    }
+
     // MARK: - FunctionDescription with strict parameter Tests
 
     @Test("FunctionDescription with strict parameter")
@@ -727,4 +893,124 @@ struct ToolCallIntegrationTests {
         print("Required tool call - Function: \(toolCall.function.name)")
         print("Arguments: \(toolCall.function.arguments)")
     }
+
+    #if canImport(Darwin)
+    @Test("Streaming tool calls via streamEvents")
+    @available(iOS 15.0, macOS 12.0, *)
+    func testStreamEventsToolCalls() async throws {
+        let weatherTool = Tool(function: FunctionDescription(
+            name: "get_weather",
+            description: "Get the current weather for a given location. Always use this tool when asked about weather.",
+            parameters: .object([
+                "type": .string("object"),
+                "properties": .object([
+                    "location": .object([
+                        "type": .string("string"),
+                        "description": .string("The city name, e.g. 'San Francisco'")
+                    ])
+                ]),
+                "required": .array([.string("location")])
+            ])
+        ))
+
+        let request = ChatRequest(
+            messages: [
+                Message(role: .user, content: .string("What is the weather in Tokyo? Use the get_weather tool."))
+            ],
+            model: "google/gemini-3-flash-preview",
+            maxTokens: 500,
+            tools: [weatherTool],
+            toolChoice: .required
+        )
+
+        var accumulator = ToolCallAccumulator()
+        var receivedToolCallDelta = false
+        var finishReason: String?
+        var textChunks: [String] = []
+
+        let stream = try await client.chat.streamEvents(request: request)
+        for try await event in stream {
+            switch event {
+            case .text(let text):
+                textChunks.append(text)
+            case .toolCallDelta(let delta):
+                receivedToolCallDelta = true
+                accumulator.accumulate(delta)
+            case .finished(let reason, _):
+                finishReason = reason
+            }
+        }
+
+        #expect(receivedToolCallDelta, "Should have received at least one tool call delta")
+        #expect(finishReason == "tool_calls", "Finish reason should be tool_calls")
+
+        let toolCalls = accumulator.toolCalls
+        #expect(toolCalls.count >= 1, "Should have accumulated at least one tool call")
+
+        let toolCall = try #require(toolCalls.first)
+        #expect(toolCall.function.name == "get_weather", "Should call get_weather")
+        #expect(!toolCall.id.isEmpty, "Tool call should have an ID")
+        #expect(!toolCall.function.arguments.isEmpty, "Tool call should have arguments")
+
+        print("Streaming tool call ID: \(toolCall.id)")
+        print("Function: \(toolCall.function.name)")
+        print("Arguments: \(toolCall.function.arguments)")
+    }
+
+    @Test("Streaming parallel tool calls via streamEvents")
+    @available(iOS 15.0, macOS 12.0, *)
+    func testStreamEventsParallelToolCalls() async throws {
+        let weatherTool = Tool(function: FunctionDescription(
+            name: "get_weather",
+            description: "Get the current weather for a given location. Always use this tool when asked about weather.",
+            parameters: .object([
+                "type": .string("object"),
+                "properties": .object([
+                    "location": .object([
+                        "type": .string("string"),
+                        "description": .string("The city name, e.g. 'San Francisco'")
+                    ])
+                ]),
+                "required": .array([.string("location")])
+            ])
+        ))
+
+        let request = ChatRequest(
+            messages: [
+                Message(role: .user, content: .string("What is the weather in both Tokyo and New York? Use the get_weather tool for each city."))
+            ],
+            model: "google/gemini-3-flash-preview",
+            maxTokens: 500,
+            tools: [weatherTool],
+            toolChoice: .required
+        )
+
+        var accumulator = ToolCallAccumulator()
+        var finishReason: String?
+
+        let stream = try await client.chat.streamEvents(request: request)
+        for try await event in stream {
+            switch event {
+            case .text:
+                break
+            case .toolCallDelta(let delta):
+                accumulator.accumulate(delta)
+            case .finished(let reason, _):
+                finishReason = reason
+            }
+        }
+
+        #expect(finishReason == "tool_calls", "Finish reason should be tool_calls")
+
+        let toolCalls = accumulator.toolCalls
+        #expect(toolCalls.count >= 2, "Should have accumulated at least two parallel tool calls")
+
+        for (i, toolCall) in toolCalls.enumerated() {
+            #expect(toolCall.function.name == "get_weather", "Tool call \(i) should be get_weather")
+            #expect(!toolCall.id.isEmpty, "Tool call \(i) should have an ID")
+            #expect(!toolCall.function.arguments.isEmpty, "Tool call \(i) should have arguments")
+            print("Tool call \(i): \(toolCall.function.name)(\(toolCall.function.arguments))")
+        }
+    }
+    #endif
 }

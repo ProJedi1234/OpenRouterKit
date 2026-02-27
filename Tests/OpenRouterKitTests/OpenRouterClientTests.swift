@@ -68,9 +68,9 @@ struct OpenRouterClientTests {
         var timesBetweenChunks: [TimeInterval] = []
         
         let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-7b-instruct:free", stream: true)
-        let stream = client.chat.stream(request: request)
-        
-        for await text in stream {
+        let stream = try await client.chat.stream(request: request)
+
+        for try await text in stream {
             let now = Date()
             let timeSinceLastChunk = now.timeIntervalSince(lastChunkTime)
             timesBetweenChunks.append(timeSinceLastChunk)

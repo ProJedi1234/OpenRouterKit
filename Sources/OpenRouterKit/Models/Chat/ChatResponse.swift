@@ -63,8 +63,8 @@ public struct ChatResponse: Codable, Sendable {
         /// Total number of tokens used.
         public var total_tokens: Int
         
-        /// Detailed breakdown of output tokens.
-        public var output_tokens_details: OutputTokensDetails?
+        /// Detailed breakdown of completion tokens.
+        public var completion_tokens_details: OutputTokensDetails?
         
         /// Detailed breakdown of output tokens.
         public struct OutputTokensDetails: Codable, Sendable {

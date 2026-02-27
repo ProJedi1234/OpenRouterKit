@@ -83,7 +83,7 @@ struct ReasoningTests {
             "prompt_tokens": 15,
             "completion_tokens": 85,
             "total_tokens": 100,
-            "output_tokens_details": {
+            "completion_tokens_details": {
               "reasoning_tokens": 45
             }
           }
@@ -96,8 +96,8 @@ struct ReasoningTests {
         
         #expect(response.id == "gen-test123", "Should decode response ID")
         #expect(response.usage != nil, "Should have usage information")
-        #expect(response.usage?.output_tokens_details != nil, "Should have output token details")
-        #expect(response.usage?.output_tokens_details?.reasoning_tokens == 45, 
+        #expect(response.usage?.completion_tokens_details != nil, "Should have output token details")
+        #expect(response.usage?.completion_tokens_details?.reasoning_tokens == 45, 
                "Should decode reasoning tokens correctly")
         #expect(response.usage?.total_tokens == 100, "Should decode total tokens")
     }
@@ -130,7 +130,7 @@ struct ReasoningTests {
         let response = try decoder.decode(OpenRouterResponse.self, from: jsonData)
         
         #expect(response.usage != nil, "Should have usage information")
-        #expect(response.usage?.output_tokens_details == nil, 
+        #expect(response.usage?.completion_tokens_details == nil, 
                "Should handle missing output token details")
         #expect(response.usage?.total_tokens == 30, "Should decode total tokens")
     }
@@ -157,7 +157,7 @@ struct ReasoningTests {
             "prompt_tokens": 15,
             "completion_tokens": 50,
             "total_tokens": 65,
-            "output_tokens_details": {
+            "completion_tokens_details": {
               "reasoning_tokens": 30
             }
           }
@@ -170,8 +170,8 @@ struct ReasoningTests {
         
         #expect(delta.id == "gen-stream123", "Should decode delta ID")
         #expect(delta.usage != nil, "Should have usage information")
-        #expect(delta.usage?.output_tokens_details != nil, "Should have output token details")
-        #expect(delta.usage?.output_tokens_details?.reasoning_tokens == 30, 
+        #expect(delta.usage?.completion_tokens_details != nil, "Should have output token details")
+        #expect(delta.usage?.completion_tokens_details?.reasoning_tokens == 30, 
                "Should decode reasoning tokens in streaming delta")
     }
 }
@@ -226,7 +226,7 @@ struct ReasoningIntegrationTests {
             // Note: reasoning_tokens may or may not be present depending on model response
             // This is expected behavior - some models may not return reasoning tokens
             print("Usage: \(usage.prompt_tokens) prompt + \(usage.completion_tokens) completion = \(usage.total_tokens) total")
-            if let reasoningTokens = usage.output_tokens_details?.reasoning_tokens {
+            if let reasoningTokens = usage.completion_tokens_details?.reasoning_tokens {
                 print("Reasoning tokens used: \(reasoningTokens)")
             }
         }
@@ -256,7 +256,7 @@ struct ReasoningIntegrationTests {
 
         if let usage = response.usage {
             print("\nToken usage - Total: \(usage.total_tokens)")
-            if let reasoningTokens = usage.output_tokens_details?.reasoning_tokens {
+            if let reasoningTokens = usage.completion_tokens_details?.reasoning_tokens {
                 print("Reasoning tokens: \(reasoningTokens)")
             }
         }
@@ -328,7 +328,7 @@ struct ReasoningIntegrationTests {
             print("Response: \(choice.message.content ?? "")")
             if let usage = response.usage {
                 print("Tokens: \(usage.total_tokens)")
-                if let reasoningTokens = usage.output_tokens_details?.reasoning_tokens {
+                if let reasoningTokens = usage.completion_tokens_details?.reasoning_tokens {
                     print("Reasoning tokens: \(reasoningTokens)")
                 }
             }

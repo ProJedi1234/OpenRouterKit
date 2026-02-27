@@ -280,10 +280,10 @@ struct ReasoningIntegrationTests {
             reasoning: ReasoningConfiguration(effort: .medium)
         )
         
-        let stream = client.chat.stream(request: request)
-        
+        let stream = try await client.chat.stream(request: request)
+
         var chunkCount = 0
-        for await text in stream {
+        for try await text in stream {
             streamedResponse += text
             chunkCount += 1
         }

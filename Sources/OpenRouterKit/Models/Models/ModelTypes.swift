@@ -193,6 +193,7 @@ public enum InputModality: String, Codable, Sendable {
 public enum OutputModality: String, Codable, Sendable {
     case text
     case image
+    case audio
     case embeddings
 }
 

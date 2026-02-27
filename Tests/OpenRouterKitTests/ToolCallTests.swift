@@ -956,5 +956,61 @@ struct ToolCallIntegrationTests {
         print("Function: \(toolCall.function.name)")
         print("Arguments: \(toolCall.function.arguments)")
     }
+
+    @Test("Streaming parallel tool calls via streamEvents")
+    @available(iOS 15.0, macOS 12.0, *)
+    func testStreamEventsParallelToolCalls() async throws {
+        let weatherTool = Tool(function: FunctionDescription(
+            name: "get_weather",
+            description: "Get the current weather for a given location. Always use this tool when asked about weather.",
+            parameters: .object([
+                "type": .string("object"),
+                "properties": .object([
+                    "location": .object([
+                        "type": .string("string"),
+                        "description": .string("The city name, e.g. 'San Francisco'")
+                    ])
+                ]),
+                "required": .array([.string("location")])
+            ])
+        ))
+
+        let request = ChatRequest(
+            messages: [
+                Message(role: .user, content: .string("What is the weather in both Tokyo and New York? Use the get_weather tool for each city."))
+            ],
+            model: "google/gemini-3-flash-preview",
+            maxTokens: 500,
+            tools: [weatherTool],
+            toolChoice: .required
+        )
+
+        var accumulator = ToolCallAccumulator()
+        var finishReason: String?
+
+        let stream = try await client.chat.streamEvents(request: request)
+        for try await event in stream {
+            switch event {
+            case .text:
+                break
+            case .toolCallDelta(let delta):
+                accumulator.accumulate(delta)
+            case .finished(let reason, _):
+                finishReason = reason
+            }
+        }
+
+        #expect(finishReason == "tool_calls", "Finish reason should be tool_calls")
+
+        let toolCalls = accumulator.toolCalls
+        #expect(toolCalls.count >= 2, "Should have accumulated at least two parallel tool calls")
+
+        for (i, toolCall) in toolCalls.enumerated() {
+            #expect(toolCall.function.name == "get_weather", "Tool call \(i) should be get_weather")
+            #expect(!toolCall.id.isEmpty, "Tool call \(i) should have an ID")
+            #expect(!toolCall.function.arguments.isEmpty, "Tool call \(i) should have arguments")
+            print("Tool call \(i): \(toolCall.function.name)(\(toolCall.function.arguments))")
+        }
+    }
     #endif
 }

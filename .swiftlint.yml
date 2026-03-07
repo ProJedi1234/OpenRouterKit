@@ -1,0 +1,69 @@
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - .build
+  - .swiftpm
+  - DerivedData
+
+disabled_rules:
+  - todo
+  - trailing_comma
+  - opening_brace
+  - type_name
+
+opt_in_rules:
+  - empty_count
+  - closure_spacing
+  - contains_over_first_not_nil
+  - empty_string
+  - fatal_error_message
+  - first_where
+  - modifier_order
+  - redundant_nil_coalescing
+
+line_length:
+  warning: 150
+  error: 250
+  ignores_comments: true
+  ignores_urls: true
+
+file_length:
+  warning: 600
+  error: 1200
+
+type_body_length:
+  warning: 400
+  error: 800
+
+function_body_length:
+  warning: 60
+  error: 120
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  max_length:
+    warning: 60
+    error: 80
+  excluded:
+    - id
+    - i
+  allowed_symbols:
+    - _
+
+nesting:
+  type_level: 3
+  function_level: 3
+
+force_cast: error
+force_try: error
+
+large_tuple:
+  warning: 4
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25

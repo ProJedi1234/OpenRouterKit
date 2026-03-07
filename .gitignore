@@ -63,5 +63,4 @@ fastlane/test_output/
 playgrounds/
 
 # SwiftLint cache
-.swiftlint.yml
 .swiftlint-cache

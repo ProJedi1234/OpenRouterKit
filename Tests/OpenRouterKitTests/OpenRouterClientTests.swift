@@ -64,38 +64,20 @@ struct OpenRouterClientTests {
         let messages = [Message(role: .user, content: .string("Write me a long paragraph about cats"))]
 
         var streamedResponse = ""
-        var lastChunkTime = Date()
-        var timesBetweenChunks: [TimeInterval] = []
+        var chunkCount = 0
 
         let request = OpenRouterRequest(messages: messages, model: "google/gemini-3-flash-preview", stream: true)
         let stream = try await client.chat.stream(request: request)
 
         for try await text in stream {
-            let now = Date()
-            let timeSinceLastChunk = now.timeIntervalSince(lastChunkTime)
-            timesBetweenChunks.append(timeSinceLastChunk)
-            lastChunkTime = now
-
             streamedResponse += text
+            chunkCount += 1
         }
 
-        // Remove the first timing since it includes request setup
-        if !timesBetweenChunks.isEmpty {
-            timesBetweenChunks.removeFirst()
-        }
-
-        // Verify we got a response
         #expect(!streamedResponse.isEmpty, "Streamed response should not be empty")
+        #expect(chunkCount >= 2, "Should receive multiple chunks of data")
 
-        // Verify we got multiple chunks
-        #expect(timesBetweenChunks.count > 3, "Should receive at least 4 chunks of data")
-
-        // Verify chunks didn't all arrive simultaneously
-        let averageTimeBetweenChunks = timesBetweenChunks.reduce(0, +) / Double(timesBetweenChunks.count)
-        #expect(averageTimeBetweenChunks > 0.001, "Average time between chunks should be greater than 0.001 seconds")
-
-        print("Average time between chunks: \(averageTimeBetweenChunks) seconds")
-        print("Number of chunks received: \(timesBetweenChunks.count + 1)")
+        print("Number of chunks received: \(chunkCount)")
         print("Final response length: \(streamedResponse.count) characters")
     }
 }

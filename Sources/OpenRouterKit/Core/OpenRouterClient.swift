@@ -53,7 +53,7 @@ public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
     ///   - siteURL: Optional site URL for referrer header
     ///   - siteName: Optional site name for X-Title header
     ///   - session: The URLSession to use for requests (default: URLSession.shared)
-    public init(
+    public convenience init(
         baseURL: String = "https://openrouter.ai/api/v1",
         apiKey: String,
         siteURL: String? = nil,
@@ -66,9 +66,7 @@ public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
             siteURL: siteURL,
             siteName: siteName
         )
-        self.httpClient = URLSessionHTTPClient(session: session, requestBuilder: requestBuilder)
-        self.chat = ChatService(httpClient: httpClient)
-        self.models = ModelsService(httpClient: httpClient)
-        self.keys = KeysService(httpClient: httpClient)
+        let client = URLSessionHTTPClient(session: session, requestBuilder: requestBuilder)
+        self.init(httpClient: client)
     }
 }

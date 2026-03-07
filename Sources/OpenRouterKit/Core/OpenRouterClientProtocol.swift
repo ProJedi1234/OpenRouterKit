@@ -36,7 +36,7 @@ public protocol ChatServiceProtocol: Sendable {
     /// - Parameter request: The chat request to stream
     /// - Returns: An AsyncThrowingStream of String chunks
     /// - Throws: OpenRouterError if the request fails
-    /// - Note: When using `OpenRouterKit` on Linux, throws ``OpenRouterError/streamingUnavailable``.
+    /// - Note: On non-Darwin platforms, throws ``OpenRouterError/streamingUnavailable``.
     ///   Use `OpenRouterKitNIO` for cross-platform streaming support.
     func stream(request: ChatRequest) async throws -> AsyncThrowingStream<String, Error>
 
@@ -50,7 +50,7 @@ public protocol ChatServiceProtocol: Sendable {
     /// - Parameter request: The chat request to stream
     /// - Returns: An AsyncThrowingStream of ChatStreamEvent values
     /// - Throws: OpenRouterError if the initial request fails
-    /// - Note: When using `OpenRouterKit` on Linux, throws ``OpenRouterError/streamingUnavailable``.
+    /// - Note: On non-Darwin platforms, throws ``OpenRouterError/streamingUnavailable``.
     ///   Use `OpenRouterKitNIO` for cross-platform streaming support.
     func streamEvents(request: ChatRequest) async throws -> AsyncThrowingStream<ChatStreamEvent, Error>
 }

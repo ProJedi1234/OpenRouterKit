@@ -68,7 +68,7 @@ extension OpenRouterClient {
     ///
     /// - Throws: If the shutdown fails
     public func shutdownNIOHTTPClient() async throws {
-        if let nioClient = self.httpClient as? NIOHTTPClient {
+        if let nioClient = self.httpClient as? NIOHTTPClient, nioClient.ownsHTTPClient {
             try await nioClient.httpClient.shutdown()
         }
     }

@@ -100,7 +100,9 @@ extension OpenRouterClient {
             return nil
         }
 
-        let host = url.host ?? "127.0.0.1"
+        guard let host = url.host else {
+            return nil
+        }
         let port = url.port ?? 8080
 
         var authorization: AsyncHTTPClient.HTTPClient.Authorization?

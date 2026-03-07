@@ -58,7 +58,7 @@ struct OpenRouterClientTests {
         #expect(!firstModel.name.isEmpty, "Model name should not be empty")
     }
     
-    /// URLSession streaming only works on Darwin. On Linux, use OpenRouterKitNIO instead.
+    /// URLSession streaming only works on Darwin. On non-Darwin platforms, use OpenRouterKitNIO instead.
     @Test(.enabled(if: isDarwin))
     func testStreamChatRequest() async throws {
         let messages = [Message(role: .user, content: .string("Write me a long paragraph about cats"))]

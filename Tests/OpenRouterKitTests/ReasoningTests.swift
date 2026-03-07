@@ -263,13 +263,7 @@ struct ReasoningIntegrationTests {
     }
     
     /// URLSession streaming only works on Darwin. On Linux, use OpenRouterKitNIO instead.
-    @Test("Stream chat request with reasoning", .enabled(if: {
-        #if canImport(Darwin)
-        return true
-        #else
-        return false
-        #endif
-    }()))
+    @Test("Stream chat request with reasoning", .enabled(if: isDarwin))
     func testStreamChatRequestWithReasoning() async throws {
         let messages = [
             Message(role: .user, content: .string("Count from 1 to 5 and explain why you're counting."))

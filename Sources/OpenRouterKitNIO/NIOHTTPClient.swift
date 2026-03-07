@@ -18,13 +18,22 @@ import FoundationNetworking
 
 /// An HTTP client backed by AsyncHTTPClient (SwiftNIO) that provides
 /// streaming support on all platforms including Linux.
-final class NIOHTTPClient: HTTPClient, @unchecked Sendable {
+final class NIOHTTPClient: OpenRouterKit.HTTPClient, @unchecked Sendable {
     private let requestBuilder: RequestBuilder
     package let httpClient: AsyncHTTPClient.HTTPClient
+    /// Whether this client owns (created) the HTTPClient and is responsible for shutdown.
+    package let ownsHTTPClient: Bool
 
-    init(requestBuilder: RequestBuilder, httpClient: AsyncHTTPClient.HTTPClient) {
+    init(requestBuilder: RequestBuilder, httpClient: AsyncHTTPClient.HTTPClient, ownsHTTPClient: Bool = false) {
         self.requestBuilder = requestBuilder
         self.httpClient = httpClient
+        self.ownsHTTPClient = ownsHTTPClient
+    }
+
+    deinit {
+        if ownsHTTPClient {
+            try? httpClient.syncShutdown()
+        }
     }
 
     func execute<T: Decodable>(_ endpoint: Endpoint, expectedStatusCode: Int) async throws -> T {

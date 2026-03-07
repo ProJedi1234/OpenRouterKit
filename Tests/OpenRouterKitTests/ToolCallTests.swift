@@ -894,13 +894,7 @@ struct ToolCallIntegrationTests {
         print("Arguments: \(toolCall.function.arguments)")
     }
 
-    @Test("Streaming tool calls via streamEvents", .enabled(if: {
-        #if canImport(Darwin)
-        return true
-        #else
-        return false
-        #endif
-    }()))
+    @Test("Streaming tool calls via streamEvents", .enabled(if: isDarwin))
     func testStreamEventsToolCalls() async throws {
         let weatherTool = Tool(function: FunctionDescription(
             name: "get_weather",
@@ -961,13 +955,7 @@ struct ToolCallIntegrationTests {
         print("Arguments: \(toolCall.function.arguments)")
     }
 
-    @Test("Streaming parallel tool calls via streamEvents", .enabled(if: {
-        #if canImport(Darwin)
-        return true
-        #else
-        return false
-        #endif
-    }()))
+    @Test("Streaming parallel tool calls via streamEvents", .enabled(if: isDarwin))
     func testStreamEventsParallelToolCalls() async throws {
         let weatherTool = Tool(function: FunctionDescription(
             name: "get_weather",

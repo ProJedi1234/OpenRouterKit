@@ -17,7 +17,14 @@ package struct RequestBuilder: Sendable {
     package let apiKey: String
     package let siteURL: String?
     package let siteName: String?
-    
+
+    package init(baseURL: String, apiKey: String, siteURL: String?, siteName: String?) {
+        self.baseURL = baseURL
+        self.apiKey = apiKey
+        self.siteURL = siteURL
+        self.siteName = siteName
+    }
+
     /// Builds a URLRequest for the given endpoint.
     ///
     /// - Parameter endpoint: The endpoint to build a request for

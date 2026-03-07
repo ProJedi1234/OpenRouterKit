@@ -56,6 +56,12 @@ public struct OpenRouterError: Error {
         case streamingUnavailable
     }
 
+    private init(type: ErrorType, message: String, metadata: [String: String]?) {
+        self.type = type
+        self.message = message
+        self.metadata = metadata
+    }
+
     /// Creates a streaming-unavailable error for non-Darwin platforms.
     static let streamingUnavailable = OpenRouterError(
         type: .streamingUnavailable,

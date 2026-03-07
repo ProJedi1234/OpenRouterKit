@@ -35,7 +35,7 @@ struct OpenRouterClientTests {
             .init(role: .user, content: .string("Tell me a joke"))
         ]
         
-        let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-7b-instruct:free")
+        let request = OpenRouterRequest(messages: messages, model: "google/gemini-3-flash-preview")
         let response = try await client.chat.send(request: request)
 
         let choice = try #require(response.choices.first, "Response should contain at least one choice")
@@ -59,13 +59,7 @@ struct OpenRouterClientTests {
     }
     
     /// URLSession streaming only works on Darwin. On Linux, use OpenRouterKitNIO instead.
-    @Test(.enabled(if: {
-        #if canImport(Darwin)
-        return true
-        #else
-        return false
-        #endif
-    }()))
+    @Test(.enabled(if: isDarwin))
     func testStreamChatRequest() async throws {
         let messages = [Message(role: .user, content: .string("Write me a long paragraph about cats"))]
 
@@ -73,7 +67,7 @@ struct OpenRouterClientTests {
         var lastChunkTime = Date()
         var timesBetweenChunks: [TimeInterval] = []
 
-        let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-7b-instruct:free", stream: true)
+        let request = OpenRouterRequest(messages: messages, model: "google/gemini-3-flash-preview", stream: true)
         let stream = try await client.chat.stream(request: request)
 
         for try await text in stream {

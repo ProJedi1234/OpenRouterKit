@@ -20,13 +20,26 @@ jobs:
         uses: norio-nomura/action-swiftlint@3.2.1
 
   test:
-    name: Test (Linux)
+    name: Test (Linux, Swift 6)
+    runs-on: ubuntu-latest
+    container:
+      image: swift:6
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print Swift version
+        run: swift --version
+      - name: Run tests
+        run: swift test --parallel
+
+  test-latest:
+    name: Test (Linux, Swift latest)
     runs-on: ubuntu-latest
     container:
       image: swift:latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - name: Swift version
+      - name: Print Swift version
         run: swift --version
       - name: Run tests
         run: swift test --parallel

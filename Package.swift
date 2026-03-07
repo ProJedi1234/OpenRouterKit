@@ -7,19 +7,32 @@ let package = Package(
     name: "OpenRouterKit",
     platforms: [.iOS(.v15), .macOS(.v12), .tvOS(.v13), .watchOS(.v6)],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "OpenRouterKit",
             targets: ["OpenRouterKit"]),
+        .library(
+            name: "OpenRouterKitNIO",
+            targets: ["OpenRouterKitNIO"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.24.0"),
     ],
     targets: [
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "OpenRouterKit"),
+        .target(
+            name: "OpenRouterKitNIO",
+            dependencies: [
+                "OpenRouterKit",
+                .product(name: "AsyncHTTPClient", package: "async-http-client"),
+            ]),
         .testTarget(
             name: "OpenRouterKitTests",
             dependencies: ["OpenRouterKit"]
+        ),
+        .testTarget(
+            name: "OpenRouterKitNIOTests",
+            dependencies: ["OpenRouterKitNIO"]
         ),
     ]
 )

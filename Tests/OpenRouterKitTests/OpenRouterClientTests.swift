@@ -58,15 +58,21 @@ struct OpenRouterClientTests {
         #expect(!firstModel.name.isEmpty, "Model name should not be empty")
     }
     
-    #if canImport(Darwin)
-    @available(iOS 15.0, macOS 12.0, *)
-    @Test func testStreamChatRequest() async throws {
+    /// URLSession streaming only works on Darwin. On Linux, use OpenRouterKitNIO instead.
+    @Test(.enabled(if: {
+        #if canImport(Darwin)
+        return true
+        #else
+        return false
+        #endif
+    }()))
+    func testStreamChatRequest() async throws {
         let messages = [Message(role: .user, content: .string("Write me a long paragraph about cats"))]
-        
+
         var streamedResponse = ""
         var lastChunkTime = Date()
         var timesBetweenChunks: [TimeInterval] = []
-        
+
         let request = OpenRouterRequest(messages: messages, model: "mistralai/mistral-7b-instruct:free", stream: true)
         let stream = try await client.chat.stream(request: request)
 
@@ -75,28 +81,27 @@ struct OpenRouterClientTests {
             let timeSinceLastChunk = now.timeIntervalSince(lastChunkTime)
             timesBetweenChunks.append(timeSinceLastChunk)
             lastChunkTime = now
-            
+
             streamedResponse += text
         }
-        
+
         // Remove the first timing since it includes request setup
         if !timesBetweenChunks.isEmpty {
             timesBetweenChunks.removeFirst()
         }
-        
+
         // Verify we got a response
         #expect(!streamedResponse.isEmpty, "Streamed response should not be empty")
-        
+
         // Verify we got multiple chunks
         #expect(timesBetweenChunks.count > 3, "Should receive at least 4 chunks of data")
-        
+
         // Verify chunks didn't all arrive simultaneously
         let averageTimeBetweenChunks = timesBetweenChunks.reduce(0, +) / Double(timesBetweenChunks.count)
         #expect(averageTimeBetweenChunks > 0.001, "Average time between chunks should be greater than 0.001 seconds")
-        
+
         print("Average time between chunks: \(averageTimeBetweenChunks) seconds")
         print("Number of chunks received: \(timesBetweenChunks.count + 1)")
         print("Final response length: \(streamedResponse.count) characters")
     }
-    #endif
 }

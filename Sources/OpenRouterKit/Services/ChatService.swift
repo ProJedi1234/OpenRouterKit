@@ -22,19 +22,15 @@ final class ChatService: ChatServiceProtocol {
         try await httpClient.execute(.chatCompletions(request), expectedStatusCode: 200)
     }
 
-    #if canImport(Darwin)
-    @available(iOS 15.0, macOS 12.0, *)
     func stream(request: ChatRequest) async throws -> AsyncThrowingStream<String, Error> {
         var streamingRequest = request
         streamingRequest.stream = true
         return try await httpClient.stream(.chatCompletions(streamingRequest))
     }
 
-    @available(iOS 15.0, macOS 12.0, *)
     func streamEvents(request: ChatRequest) async throws -> AsyncThrowingStream<ChatStreamEvent, Error> {
         var streamingRequest = request
         streamingRequest.stream = true
         return try await httpClient.streamEvents(.chatCompletions(streamingRequest))
     }
-    #endif
 }

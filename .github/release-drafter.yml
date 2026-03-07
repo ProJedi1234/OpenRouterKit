@@ -18,6 +18,9 @@ categories:
   - title: 'Maintenance'
     labels:
       - 'maintenance'
+  - title: 'Other Changes'
+    labels:
+      - '*'
 
 exclude-labels:
   - 'skip-changelog'

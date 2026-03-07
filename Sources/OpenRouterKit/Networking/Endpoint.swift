@@ -8,7 +8,7 @@
 import Foundation
 
 /// Represents an API endpoint for the OpenRouter service.
-enum Endpoint {
+package enum Endpoint {
     case chatCompletions(ChatRequest)
     case listModels(category: String?, supportedParameters: String?, useRSS: String?, useRSSChatLinks: String?)
     case listModelsForUser
@@ -109,7 +109,7 @@ enum Endpoint {
 }
 
 /// HTTP method enumeration.
-enum HTTPMethod: String {
+package enum HTTPMethod: String {
     case GET = "GET"
     case POST = "POST"
     case PATCH = "PATCH"

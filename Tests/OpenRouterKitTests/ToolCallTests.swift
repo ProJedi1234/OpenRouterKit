@@ -645,7 +645,7 @@ struct ToolCallUnitTests {
     @Test("processLineAsEvents extracts text content")
     func testProcessLineAsEventsText() {
         let line = "data: {\"id\":\"gen-1\",\"choices\":[{\"delta\":{\"content\":\"Hello\"},\"index\":0}]}\n"
-        let events = URLSessionHTTPClient.processLineAsEvents(line)
+        let events = SSEParser.processLineAsEvents(line)
 
         #expect(events.count == 1)
         if case .text(let text) = events[0] {
@@ -660,7 +660,7 @@ struct ToolCallUnitTests {
         let line = """
         data: {"id":"gen-1","choices":[{"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"get_weather","arguments":"{\\"loc"}}]},"index":0}]}
         """
-        let events = URLSessionHTTPClient.processLineAsEvents(line)
+        let events = SSEParser.processLineAsEvents(line)
 
         #expect(events.count == 1)
         if case .toolCallDelta(let delta) = events[0] {
@@ -677,7 +677,7 @@ struct ToolCallUnitTests {
         let line = """
         data: {"id":"gen-1","choices":[{"delta":{},"index":0,"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":10,"completion_tokens":5,"total_tokens":15}}
         """
-        let events = URLSessionHTTPClient.processLineAsEvents(line)
+        let events = SSEParser.processLineAsEvents(line)
 
         #expect(events.count == 1)
         if case .finished(let reason, let usage) = events[0] {
@@ -691,9 +691,9 @@ struct ToolCallUnitTests {
 
     @Test("processLineAsEvents returns empty for non-data lines")
     func testProcessLineAsEventsIgnoresNonData() {
-        #expect(URLSessionHTTPClient.processLineAsEvents("").isEmpty)
-        #expect(URLSessionHTTPClient.processLineAsEvents(": comment\n").isEmpty)
-        #expect(URLSessionHTTPClient.processLineAsEvents("data: [DONE]\n").isEmpty)
+        #expect(SSEParser.processLineAsEvents("").isEmpty)
+        #expect(SSEParser.processLineAsEvents(": comment\n").isEmpty)
+        #expect(SSEParser.processLineAsEvents("data: [DONE]\n").isEmpty)
     }
 
     @Test("processLineAsEvents returns multiple events from one line")
@@ -702,7 +702,7 @@ struct ToolCallUnitTests {
         let line = """
         data: {"id":"gen-1","choices":[{"delta":{"content":"done"},"index":0,"finish_reason":"stop"}]}
         """
-        let events = URLSessionHTTPClient.processLineAsEvents(line)
+        let events = SSEParser.processLineAsEvents(line)
 
         #expect(events.count == 2)
         if case .text(let text) = events[0] {
@@ -894,9 +894,7 @@ struct ToolCallIntegrationTests {
         print("Arguments: \(toolCall.function.arguments)")
     }
 
-    #if canImport(Darwin)
-    @Test("Streaming tool calls via streamEvents")
-    @available(iOS 15.0, macOS 12.0, *)
+    @Test("Streaming tool calls via streamEvents", .enabled(if: isDarwin))
     func testStreamEventsToolCalls() async throws {
         let weatherTool = Tool(function: FunctionDescription(
             name: "get_weather",
@@ -957,8 +955,7 @@ struct ToolCallIntegrationTests {
         print("Arguments: \(toolCall.function.arguments)")
     }
 
-    @Test("Streaming parallel tool calls via streamEvents")
-    @available(iOS 15.0, macOS 12.0, *)
+    @Test("Streaming parallel tool calls via streamEvents", .enabled(if: isDarwin))
     func testStreamEventsParallelToolCalls() async throws {
         let weatherTool = Tool(function: FunctionDescription(
             name: "get_weather",
@@ -1012,5 +1009,4 @@ struct ToolCallIntegrationTests {
             print("Tool call \(i): \(toolCall.function.name)(\(toolCall.function.arguments))")
         }
     }
-    #endif
 }

@@ -12,18 +12,25 @@ import FoundationNetworking
 #endif
 
 /// Builds URLRequest objects for OpenRouter API endpoints.
-struct RequestBuilder {
-    let baseURL: String
-    let apiKey: String
-    let siteURL: String?
-    let siteName: String?
-    
+package struct RequestBuilder: Sendable {
+    package let baseURL: String
+    package let apiKey: String
+    package let siteURL: String?
+    package let siteName: String?
+
+    package init(baseURL: String, apiKey: String, siteURL: String?, siteName: String?) {
+        self.baseURL = baseURL
+        self.apiKey = apiKey
+        self.siteURL = siteURL
+        self.siteName = siteName
+    }
+
     /// Builds a URLRequest for the given endpoint.
     ///
     /// - Parameter endpoint: The endpoint to build a request for
     /// - Returns: A configured URLRequest
     /// - Throws: URLError if the URL cannot be constructed
-    func build(_ endpoint: Endpoint) throws -> URLRequest {
+    package func build(_ endpoint: Endpoint) throws -> URLRequest {
         var components = URLComponents(string: "\(baseURL)\(endpoint.path)")
         components?.queryItems = endpoint.queryItems
         

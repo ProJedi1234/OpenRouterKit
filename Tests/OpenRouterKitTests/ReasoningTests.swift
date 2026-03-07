@@ -23,7 +23,7 @@ struct ReasoningTests {
             messages: [
                 Message(role: .user, content: .string("What is 2+2?"))
             ],
-            model: "openai/gpt-oss-20b:free",
+            model: "google/gemini-3-flash-preview",
             reasoning: ReasoningConfiguration(effort: .high)
         )
         
@@ -69,7 +69,7 @@ struct ReasoningTests {
         let jsonString = """
         {
           "id": "gen-test123",
-          "model": "openai/gpt-oss-20b:free",
+          "model": "google/gemini-3-flash-preview",
           "choices": [
             {
               "message": {
@@ -142,7 +142,7 @@ struct ReasoningTests {
           "id": "gen-stream123",
           "object": "chat.completion.chunk",
           "created": 1234567890,
-          "model": "openai/gpt-oss-20b:free",
+          "model": "google/gemini-3-flash-preview",
           "choices": [
             {
               "delta": {
@@ -208,7 +208,7 @@ struct ReasoningIntegrationTests {
         
         let request = OpenRouterRequest(
             messages: messages,
-            model: "openai/gpt-oss-20b:free",
+            model: "google/gemini-3-flash-preview",
             maxTokens: 1000,
             reasoning: ReasoningConfiguration(effort: .minimal)
         )
@@ -240,7 +240,7 @@ struct ReasoningIntegrationTests {
 
         let request = OpenRouterRequest(
             messages: messages,
-            model: "openai/gpt-oss-20b:free",
+            model: "google/gemini-3-flash-preview",
             maxTokens: 1500,
             reasoning: ReasoningConfiguration(effort: .high)
         )
@@ -262,9 +262,8 @@ struct ReasoningIntegrationTests {
         }
     }
     
-    #if canImport(Darwin)
-    @available(iOS 15.0, macOS 12.0, *)
-    @Test("Stream chat request with reasoning")
+    /// URLSession streaming only works on Darwin. On Linux, use OpenRouterKitNIO instead.
+    @Test("Stream chat request with reasoning", .enabled(if: isDarwin))
     func testStreamChatRequestWithReasoning() async throws {
         let messages = [
             Message(role: .user, content: .string("Count from 1 to 5 and explain why you're counting."))
@@ -274,7 +273,7 @@ struct ReasoningIntegrationTests {
         
         let request = OpenRouterRequest(
             messages: messages,
-            model: "openai/gpt-oss-20b:free",
+            model: "google/gemini-3-flash-preview",
             stream: true,
             maxTokens: 1000,
             reasoning: ReasoningConfiguration(effort: .medium)
@@ -296,8 +295,7 @@ struct ReasoningIntegrationTests {
         print("Final response length: \(streamedResponse.count) characters")
         print("Response: \(streamedResponse)")
     }
-    #endif
-    
+
     @Test("Test all reasoning effort levels")
     func testAllReasoningEffortLevelsAPI() async throws {
         let efforts: [(ReasoningEffort, String)] = [
@@ -314,7 +312,7 @@ struct ReasoningIntegrationTests {
             
             let request = OpenRouterRequest(
                 messages: messages,
-                model: "openai/gpt-oss-20b:free",
+                model: "google/gemini-3-flash-preview",
                 maxTokens: 500,
                 reasoning: ReasoningConfiguration(effort: effort)
             )
@@ -343,7 +341,7 @@ struct ReasoningIntegrationTests {
         
         let request = OpenRouterRequest(
             messages: messages,
-            model: "openai/gpt-oss-20b:free",
+            model: "google/gemini-3-flash-preview",
             maxTokens: 100
             // No reasoning parameter
         )

@@ -22,7 +22,7 @@ import FoundationNetworking
 /// let response = try await client.chat.send(request: chatRequest)
 /// ```
 public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
-    private let httpClient: HTTPClient
+    package let httpClient: HTTPClient
     
     /// Service for chat completion operations.
     public let chat: ChatServiceProtocol
@@ -33,6 +33,18 @@ public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
     /// Service for API key management operations.
     public let keys: KeysServiceProtocol
     
+    /// Creates a new OpenRouter client with a custom HTTP client implementation.
+    ///
+    /// Used internally by `OpenRouterKitNIO` to inject the NIO-based HTTP client.
+    ///
+    /// - Parameter httpClient: The HTTP client to use for requests
+    package init(httpClient: HTTPClient) {
+        self.httpClient = httpClient
+        self.chat = ChatService(httpClient: httpClient)
+        self.models = ModelsService(httpClient: httpClient)
+        self.keys = KeysService(httpClient: httpClient)
+    }
+
     /// Creates a new OpenRouter client.
     ///
     /// - Parameters:
@@ -41,7 +53,7 @@ public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
     ///   - siteURL: Optional site URL for referrer header
     ///   - siteName: Optional site name for X-Title header
     ///   - session: The URLSession to use for requests (default: URLSession.shared)
-    public init(
+    public convenience init(
         baseURL: String = "https://openrouter.ai/api/v1",
         apiKey: String,
         siteURL: String? = nil,
@@ -54,9 +66,7 @@ public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
             siteURL: siteURL,
             siteName: siteName
         )
-        self.httpClient = URLSessionHTTPClient(session: session, requestBuilder: requestBuilder)
-        self.chat = ChatService(httpClient: httpClient)
-        self.models = ModelsService(httpClient: httpClient)
-        self.keys = KeysService(httpClient: httpClient)
+        let client = URLSessionHTTPClient(session: session, requestBuilder: requestBuilder)
+        self.init(httpClient: client)
     }
 }

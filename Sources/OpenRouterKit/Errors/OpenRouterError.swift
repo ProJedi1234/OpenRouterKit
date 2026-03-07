@@ -8,13 +8,13 @@
 import Foundation
 
 /// Internal error response structure from the OpenRouter API
-struct ErrorResponse: Decodable {
-    struct ErrorDetail: Decodable {
-        let code: Int
-        let message: String
-        let metadata: [String: String]?
+package struct ErrorResponse: Decodable {
+    package struct ErrorDetail: Decodable {
+        package let code: Int
+        package let message: String
+        package let metadata: [String: String]?
     }
-    let error: ErrorDetail
+    package let error: ErrorDetail
 }
 
 /// Errors that can occur when interacting with the OpenRouter API.
@@ -51,9 +51,25 @@ public struct OpenRouterError: Error {
         case noAvailableProvider
         /// Unknown error with HTTP status code
         case unknownError(Int)
+        /// Streaming is not available with URLSession on this platform.
+        /// Use OpenRouterKitNIO for cross-platform streaming support.
+        case streamingUnavailable
     }
 
-    init(httpStatusCode: Int, errorResponse: ErrorResponse?) {
+    private init(type: ErrorType, message: String, metadata: [String: String]?) {
+        self.type = type
+        self.message = message
+        self.metadata = metadata
+    }
+
+    /// Creates a streaming-unavailable error for non-Darwin platforms.
+    static let streamingUnavailable = OpenRouterError(
+        type: .streamingUnavailable,
+        message: "Streaming requires Darwin (macOS/iOS) or OpenRouterKitNIO. Import OpenRouterKitNIO and use OpenRouterClient.nio(apiKey:) for cross-platform streaming.",
+        metadata: nil
+    )
+
+    package init(httpStatusCode: Int, errorResponse: ErrorResponse?) {
         self.message = errorResponse?.error.message ?? "Unknown error occurred"
         self.metadata = errorResponse?.error.metadata
 
@@ -100,6 +116,8 @@ public struct OpenRouterError: Error {
             return "No Available Provider: \(message)"
         case .unknownError(let code):
             return "Unknown Error (\(code)): \(message)"
+        case .streamingUnavailable:
+            return "Streaming Unavailable: \(message)"
         }
     }
 }

@@ -31,14 +31,13 @@ public protocol ChatServiceProtocol: Sendable {
     /// - Throws: OpenRouterError if the request fails
     func send(request: ChatRequest) async throws -> ChatResponse
 
-    #if canImport(Darwin)
     /// Streams a chat completion response.
     ///
     /// - Parameter request: The chat request to stream
     /// - Returns: An AsyncThrowingStream of String chunks
     /// - Throws: OpenRouterError if the request fails
-    /// - Note: Streaming is only available on Darwin platforms (macOS, iOS, etc.)
-    @available(iOS 15.0, macOS 12.0, *)
+    /// - Note: On non-Darwin platforms, throws ``OpenRouterError/streamingUnavailable``.
+    ///   Use `OpenRouterKitNIO` for cross-platform streaming support.
     func stream(request: ChatRequest) async throws -> AsyncThrowingStream<String, Error>
 
     /// Streams a chat completion response as structured events.
@@ -51,10 +50,9 @@ public protocol ChatServiceProtocol: Sendable {
     /// - Parameter request: The chat request to stream
     /// - Returns: An AsyncThrowingStream of ChatStreamEvent values
     /// - Throws: OpenRouterError if the initial request fails
-    /// - Note: Streaming is only available on Darwin platforms (macOS, iOS, etc.)
-    @available(iOS 15.0, macOS 12.0, *)
+    /// - Note: On non-Darwin platforms, throws ``OpenRouterError/streamingUnavailable``.
+    ///   Use `OpenRouterKitNIO` for cross-platform streaming support.
     func streamEvents(request: ChatRequest) async throws -> AsyncThrowingStream<ChatStreamEvent, Error>
-    #endif
 }
 
 /// Protocol for model listing operations.

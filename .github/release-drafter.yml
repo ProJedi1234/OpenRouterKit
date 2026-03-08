@@ -58,13 +58,16 @@ template: |
 autolabeler:
   - label: 'feature'
     title:
-      - '/^feat(\(.+\))?:/i'
+      - '/^feat(\(.+\))?!?:/i'
   - label: 'bug'
     title:
-      - '/^fix(\(.+\))?:/i'
+      - '/^fix(\(.+\))?!?:/i'
   - label: 'documentation'
     title:
-      - '/^docs(\(.+\))?:/i'
+      - '/^docs(\(.+\))?!?:/i'
   - label: 'maintenance'
     title:
-      - '/^(chore|refactor|ci|build|perf|style|test)(\(.+\))?:/i'
+      - '/^(chore|refactor|ci|build|perf|style|test)(\(.+\))?!?:/i'
+  - label: 'major'
+    title:
+      - '/^[a-z]+(\(.+\))?!:/i'

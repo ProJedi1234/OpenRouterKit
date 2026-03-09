@@ -13,7 +13,7 @@ struct GuardrailsTypesTests {
     // MARK: - Guardrail Decoding
 
     @Test func testDecodeGuardrail() throws {
-        let json = """
+        let json = Data("""
         {
             "id": "gr_123",
             "name": "Production Guardrail",
@@ -27,7 +27,7 @@ struct GuardrailsTypesTests {
             "created_at": "2025-01-01T00:00:00Z",
             "updated_at": "2025-06-01T00:00:00Z"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let guardrail = try JSONDecoder().decode(Guardrail.self, from: json)
 
@@ -45,12 +45,12 @@ struct GuardrailsTypesTests {
     }
 
     @Test func testDecodeGuardrailMinimalFields() throws {
-        let json = """
+        let json = Data("""
         {
             "id": "gr_456",
             "name": "Basic Guardrail"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let guardrail = try JSONDecoder().decode(Guardrail.self, from: json)
 
@@ -66,7 +66,7 @@ struct GuardrailsTypesTests {
     }
 
     @Test func testDecodeGuardrailListResponse() throws {
-        let json = """
+        let json = Data("""
         {
             "data": [
                 {"id": "gr_1", "name": "First"},
@@ -74,7 +74,7 @@ struct GuardrailsTypesTests {
             ],
             "total_count": 42
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let response = try JSONDecoder().decode(GuardrailListResponse.self, from: json)
         #expect(response.data.count == 2)
@@ -84,11 +84,11 @@ struct GuardrailsTypesTests {
     }
 
     @Test func testDecodeGuardrailListResponseWithoutTotalCount() throws {
-        let json = """
+        let json = Data("""
         {
             "data": [{"id": "gr_1", "name": "First"}]
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let response = try JSONDecoder().decode(GuardrailListResponse.self, from: json)
         #expect(response.data.count == 1)
@@ -96,23 +96,23 @@ struct GuardrailsTypesTests {
     }
 
     @Test func testDecodeGuardrailResponse() throws {
-        let json = """
+        let json = Data("""
         {
             "data": {
                 "id": "gr_1",
                 "name": "Test"
             }
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let response = try JSONDecoder().decode(GuardrailResponse.self, from: json)
         #expect(response.data.id == "gr_1")
     }
 
     @Test func testDecodeDeleteGuardrailResponse() throws {
-        let json = """
+        let json = Data("""
         {"deleted": true}
-        """.data(using: .utf8)!
+        """.utf8)
 
         let response = try JSONDecoder().decode(DeleteGuardrailResponse.self, from: json)
         #expect(response.deleted == true)
@@ -133,25 +133,25 @@ struct GuardrailsTypesTests {
         )
 
         let data = try JSONEncoder().encode(request)
-        let dict = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any]
 
-        #expect(dict["name"] as? String == "New Guardrail")
-        #expect(dict["description"] as? String == "A test guardrail")
-        #expect(dict["limit_usd"] as? Double == 50.0)
-        #expect(dict["reset_interval"] as? String == "weekly")
-        #expect(dict["allowed_providers"] as? [String] == ["openai"])
-        #expect(dict["allowed_models"] as? [String] == ["openai/gpt-4o"])
-        #expect(dict["enforce_zdr"] as? Bool == false)
+        #expect(dict?["name"] as? String == "New Guardrail")
+        #expect(dict?["description"] as? String == "A test guardrail")
+        #expect(dict?["limit_usd"] as? Double == 50.0)
+        #expect(dict?["reset_interval"] as? String == "weekly")
+        #expect(dict?["allowed_providers"] as? [String] == ["openai"])
+        #expect(dict?["allowed_models"] as? [String] == ["openai/gpt-4o"])
+        #expect(dict?["enforce_zdr"] as? Bool == false)
     }
 
     @Test func testEncodeCreateGuardrailRequestMinimal() throws {
         let request = CreateGuardrailRequest(name: "Minimal")
 
         let data = try JSONEncoder().encode(request)
-        let dict = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any]
 
-        #expect(dict["name"] as? String == "Minimal")
-        #expect(dict.keys.count == 1)
+        #expect(dict?["name"] as? String == "Minimal")
+        #expect(dict?.keys.count == 1)
     }
 
     @Test func testEncodeUpdateGuardrailRequest() throws {
@@ -162,35 +162,35 @@ struct GuardrailsTypesTests {
         )
 
         let data = try JSONEncoder().encode(request)
-        let dict = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any]
 
-        #expect(dict["name"] as? String == "Updated Name")
-        #expect(dict["limit_usd"] as? Double == 200.0)
-        #expect(dict["reset_interval"] as? String == "daily")
+        #expect(dict?["name"] as? String == "Updated Name")
+        #expect(dict?["limit_usd"] as? Double == 200.0)
+        #expect(dict?["reset_interval"] as? String == "daily")
     }
 
     @Test func testEncodeAssignKeysRequest() throws {
         let request = GuardrailAssignKeysRequest(keyHashes: ["hash_1", "hash_2"])
 
         let data = try JSONEncoder().encode(request)
-        let dict = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any]
 
-        #expect(dict["key_hashes"] as? [String] == ["hash_1", "hash_2"])
+        #expect(dict?["key_hashes"] as? [String] == ["hash_1", "hash_2"])
     }
 
     @Test func testEncodeAssignMembersRequest() throws {
         let request = GuardrailAssignMembersRequest(memberUserIds: ["user_1", "user_2"])
 
         let data = try JSONEncoder().encode(request)
-        let dict = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any]
 
-        #expect(dict["member_user_ids"] as? [String] == ["user_1", "user_2"])
+        #expect(dict?["member_user_ids"] as? [String] == ["user_1", "user_2"])
     }
 
     // MARK: - Assignment Decoding
 
     @Test func testDecodeKeyAssignment() throws {
-        let json = """
+        let json = Data("""
         {
             "id": "ka_1",
             "key_hash": "abc123",
@@ -200,7 +200,7 @@ struct GuardrailsTypesTests {
             "assigned_by": "user_42",
             "created_at": "2025-01-01T00:00:00Z"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let assignment = try JSONDecoder().decode(GuardrailKeyAssignment.self, from: json)
         #expect(assignment.id == "ka_1")
@@ -213,7 +213,7 @@ struct GuardrailsTypesTests {
     }
 
     @Test func testDecodeMemberAssignment() throws {
-        let json = """
+        let json = Data("""
         {
             "id": "ma_1",
             "user_id": "user_42",
@@ -222,7 +222,7 @@ struct GuardrailsTypesTests {
             "assigned_by": "admin_1",
             "created_at": "2025-01-01T00:00:00Z"
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let assignment = try JSONDecoder().decode(GuardrailMemberAssignment.self, from: json)
         #expect(assignment.id == "ma_1")
@@ -234,7 +234,7 @@ struct GuardrailsTypesTests {
     }
 
     @Test func testDecodeKeyAssignmentListResponse() throws {
-        let json = """
+        let json = Data("""
         {
             "data": [
                 {"id": "ka_1", "key_hash": "h1", "guardrail_id": "gr_1"},
@@ -242,7 +242,7 @@ struct GuardrailsTypesTests {
             ],
             "total_count": 2
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let response = try JSONDecoder().decode(GuardrailKeyAssignmentListResponse.self, from: json)
         #expect(response.data.count == 2)
@@ -250,14 +250,14 @@ struct GuardrailsTypesTests {
     }
 
     @Test func testDecodeMemberAssignmentListResponse() throws {
-        let json = """
+        let json = Data("""
         {
             "data": [
                 {"id": "ma_1", "user_id": "u1", "guardrail_id": "gr_1"}
             ],
             "total_count": 1
         }
-        """.data(using: .utf8)!
+        """.utf8)
 
         let response = try JSONDecoder().decode(GuardrailMemberAssignmentListResponse.self, from: json)
         #expect(response.data.count == 1)
@@ -266,9 +266,9 @@ struct GuardrailsTypesTests {
     }
 
     @Test func testDecodeBulkAssignKeysResponse() throws {
-        let json = """
+        let json = Data("""
         {"assigned_count": 3}
-        """.data(using: .utf8)!
+        """.utf8)
 
         let response = try JSONDecoder().decode(GuardrailAssignKeysResponse.self, from: json)
         #expect(response.assignedCount == 3)
@@ -276,9 +276,9 @@ struct GuardrailsTypesTests {
     }
 
     @Test func testDecodeBulkUnassignKeysResponse() throws {
-        let json = """
+        let json = Data("""
         {"unassigned_count": 2}
-        """.data(using: .utf8)!
+        """.utf8)
 
         let response = try JSONDecoder().decode(GuardrailAssignKeysResponse.self, from: json)
         #expect(response.unassignedCount == 2)
@@ -286,18 +286,18 @@ struct GuardrailsTypesTests {
     }
 
     @Test func testDecodeBulkAssignMembersResponse() throws {
-        let json = """
+        let json = Data("""
         {"assigned_count": 5}
-        """.data(using: .utf8)!
+        """.utf8)
 
         let response = try JSONDecoder().decode(GuardrailAssignMembersResponse.self, from: json)
         #expect(response.assignedCount == 5)
     }
 
     @Test func testDecodeBulkUnassignMembersResponse() throws {
-        let json = """
+        let json = Data("""
         {"unassigned_count": 1}
-        """.data(using: .utf8)!
+        """.utf8)
 
         let response = try JSONDecoder().decode(GuardrailAssignMembersResponse.self, from: json)
         #expect(response.unassignedCount == 1)

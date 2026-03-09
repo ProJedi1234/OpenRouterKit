@@ -14,9 +14,9 @@ import FoundationNetworking
 
 @Suite("Reasoning Token Support Tests")
 struct ReasoningTests {
-    
+
     // MARK: - Unit Tests (No API Calls)
-    
+
     @Test("Reasoning request encoding")
     func testReasoningRequestEncoding() throws {
         let request = OpenRouterRequest(
@@ -26,44 +26,44 @@ struct ReasoningTests {
             model: "google/gemini-3-flash-preview",
             reasoning: ReasoningConfiguration(effort: .high)
         )
-        
+
         let encoder = JSONEncoder()
         encoder.keyEncodingStrategy = .convertToSnakeCase
         let jsonData = try encoder.encode(request)
-        
+
         // Decode as dictionary to verify structure
         let json = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
-        
+
         #expect(json != nil, "Should encode to valid JSON")
         #expect(json?["reasoning"] != nil, "Should contain reasoning field")
-        
+
         let reasoning = json?["reasoning"] as? [String: Any]
         #expect(reasoning?["effort"] as? String == "high", "Reasoning effort should be 'high'")
     }
-    
+
     @Test("All reasoning effort levels encoding")
     func testAllReasoningEffortLevels() throws {
         let efforts: [ReasoningEffort] = [.minimal, .low, .medium, .high]
         let expectedStrings = ["minimal", "low", "medium", "high"]
-        
+
         for (effort, expectedString) in zip(efforts, expectedStrings) {
             let request = OpenRouterRequest(
                 messages: [Message(role: .user, content: .string("test"))],
                 model: "test-model",
                 reasoning: ReasoningConfiguration(effort: effort)
             )
-            
+
             let encoder = JSONEncoder()
             encoder.keyEncodingStrategy = .convertToSnakeCase
             let jsonData = try encoder.encode(request)
             let json = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any]
             let reasoning = json?["reasoning"] as? [String: Any]
-            
-            #expect(reasoning?["effort"] as? String == expectedString, 
+
+            #expect(reasoning?["effort"] as? String == expectedString,
                    "Effort level \(effort) should encode as '\(expectedString)'")
         }
     }
-    
+
     @Test("Response decoding with reasoning tokens")
     func testResponseDecodingWithReasoningTokens() throws {
         let jsonString = """
@@ -89,19 +89,19 @@ struct ReasoningTests {
           }
         }
         """
-        
+
         let jsonData = jsonString.data(using: .utf8)!
         let decoder = JSONDecoder()
         let response = try decoder.decode(OpenRouterResponse.self, from: jsonData)
-        
+
         #expect(response.id == "gen-test123", "Should decode response ID")
         #expect(response.usage != nil, "Should have usage information")
         #expect(response.usage?.completion_tokens_details != nil, "Should have output token details")
-        #expect(response.usage?.completion_tokens_details?.reasoning_tokens == 45, 
+        #expect(response.usage?.completion_tokens_details?.reasoning_tokens == 45,
                "Should decode reasoning tokens correctly")
         #expect(response.usage?.total_tokens == 100, "Should decode total tokens")
     }
-    
+
     @Test("Response decoding without reasoning tokens")
     func testResponseDecodingWithoutReasoningTokens() throws {
         let jsonString = """
@@ -124,17 +124,17 @@ struct ReasoningTests {
           }
         }
         """
-        
+
         let jsonData = jsonString.data(using: .utf8)!
         let decoder = JSONDecoder()
         let response = try decoder.decode(OpenRouterResponse.self, from: jsonData)
-        
+
         #expect(response.usage != nil, "Should have usage information")
-        #expect(response.usage?.completion_tokens_details == nil, 
+        #expect(response.usage?.completion_tokens_details == nil,
                "Should handle missing output token details")
         #expect(response.usage?.total_tokens == 30, "Should decode total tokens")
     }
-    
+
     @Test("StreamingDelta decoding with reasoning tokens")
     func testStreamingDeltaDecodingWithReasoningTokens() throws {
         let jsonString = """
@@ -163,15 +163,15 @@ struct ReasoningTests {
           }
         }
         """
-        
+
         let jsonData = jsonString.data(using: .utf8)!
         let decoder = JSONDecoder()
         let delta = try decoder.decode(StreamingDelta.self, from: jsonData)
-        
+
         #expect(delta.id == "gen-stream123", "Should decode delta ID")
         #expect(delta.usage != nil, "Should have usage information")
         #expect(delta.usage?.completion_tokens_details != nil, "Should have output token details")
-        #expect(delta.usage?.completion_tokens_details?.reasoning_tokens == 30, 
+        #expect(delta.usage?.completion_tokens_details?.reasoning_tokens == 30,
                "Should decode reasoning tokens in streaming delta")
     }
 }
@@ -197,22 +197,22 @@ struct ReasoningIntegrationTests {
             session: session
         )
     }
-    
+
     // MARK: - Integration Tests (Real API Calls with Free Model)
-    
+
     @Test("Chat request with reasoning - minimal effort")
     func testChatRequestWithReasoningMinimal() async throws {
         let messages: [Message] = [
             .init(role: .user, content: .string("What is 2+2? Show your work."))
         ]
-        
+
         let request = OpenRouterRequest(
             messages: messages,
             model: "google/gemini-3-flash-preview",
             maxTokens: 1000,
             reasoning: ReasoningConfiguration(effort: .minimal)
         )
-        
+
         let response = try await client.chat.send(request: request)
 
         let choice = try #require(response.choices.first, "Response should contain at least one choice")
@@ -261,16 +261,16 @@ struct ReasoningIntegrationTests {
             }
         }
     }
-    
+
     /// URLSession streaming only works on Darwin. On Linux, use OpenRouterKitNIO instead.
     @Test("Stream chat request with reasoning", .enabled(if: isDarwin))
     func testStreamChatRequestWithReasoning() async throws {
         let messages = [
             Message(role: .user, content: .string("Count from 1 to 5 and explain why you're counting."))
         ]
-        
+
         var streamedResponse = ""
-        
+
         let request = OpenRouterRequest(
             messages: messages,
             model: "google/gemini-3-flash-preview",
@@ -278,7 +278,7 @@ struct ReasoningIntegrationTests {
             maxTokens: 1000,
             reasoning: ReasoningConfiguration(effort: .medium)
         )
-        
+
         let stream = try await client.chat.stream(request: request)
 
         var chunkCount = 0
@@ -286,11 +286,11 @@ struct ReasoningIntegrationTests {
             streamedResponse += text
             chunkCount += 1
         }
-        
+
         // Verify we got a response
         #expect(!streamedResponse.isEmpty, "Streamed response should not be empty")
         #expect(chunkCount > 0, "Should receive at least one chunk of data")
-        
+
         print("Streamed \(chunkCount) chunks with reasoning (medium effort)")
         print("Final response length: \(streamedResponse.count) characters")
         print("Response: \(streamedResponse)")
@@ -304,19 +304,19 @@ struct ReasoningIntegrationTests {
             (.medium, "medium"),
             (.high, "high")
         ]
-        
+
         for (effort, name) in efforts {
             let messages: [Message] = [
                 .init(role: .user, content: .string("What is 3+3?"))
             ]
-            
+
             let request = OpenRouterRequest(
                 messages: messages,
                 model: "google/gemini-3-flash-preview",
                 maxTokens: 500,
                 reasoning: ReasoningConfiguration(effort: effort)
             )
-            
+
             let response = try await client.chat.send(request: request)
 
             let choice = try #require(response.choices.first, "Response with \(name) effort should contain at least one choice")
@@ -332,20 +332,20 @@ struct ReasoningIntegrationTests {
             }
         }
     }
-    
+
     @Test("Request without reasoning still works")
     func testRequestWithoutReasoning() async throws {
         let messages: [Message] = [
             .init(role: .user, content: .string("Say hello."))
         ]
-        
+
         let request = OpenRouterRequest(
             messages: messages,
             model: "google/gemini-3-flash-preview",
             maxTokens: 100
             // No reasoning parameter
         )
-        
+
         let response = try await client.chat.send(request: request)
 
         let choice = try #require(response.choices.first, "Response should contain at least one choice")

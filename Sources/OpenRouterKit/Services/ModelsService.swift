@@ -10,14 +10,14 @@ import Foundation
 /// Service for model listing operations.
 final class ModelsService: ModelsServiceProtocol {
     private let httpClient: HTTPClient
-    
+
     /// Creates a new models service.
     ///
     /// - Parameter httpClient: The HTTP client to use for requests
     init(httpClient: HTTPClient) {
         self.httpClient = httpClient
     }
-    
+
     func list(
         category: String?,
         supportedParameters: String?,
@@ -29,7 +29,7 @@ final class ModelsService: ModelsServiceProtocol {
             expectedStatusCode: 200
         )
     }
-    
+
     func listForUser() async throws -> ModelsListResponse {
         try await httpClient.execute(.listModelsForUser, expectedStatusCode: 200)
     }

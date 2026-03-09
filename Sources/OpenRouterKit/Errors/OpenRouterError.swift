@@ -24,13 +24,13 @@ package struct ErrorResponse: Decodable {
 public struct OpenRouterError: Error {
     /// The type of error that occurred
     public let type: ErrorType
-    
+
     /// Human-readable error message
     public let message: String
-    
+
     /// Optional metadata associated with the error
     public let metadata: [String: String]?
-    
+
     /// Enumeration of error types that can occur
     public enum ErrorType: Sendable {
         /// Bad request (400)

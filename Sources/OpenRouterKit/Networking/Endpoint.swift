@@ -54,7 +54,7 @@ package enum Endpoint {
             return .GET
         }
     }
-    
+
     /// The path for this endpoint.
     var path: String {
         switch self {
@@ -88,7 +88,7 @@ package enum Endpoint {
             return "/guardrails/\(guardrailId)/assignments/members/remove"
         }
     }
-    
+
     /// Query items for this endpoint (if applicable).
     var queryItems: [URLQueryItem]? {
         switch self {
@@ -133,7 +133,7 @@ package enum Endpoint {
             return nil
         }
     }
-    
+
     /// Request body for this endpoint (if applicable).
     var body: Encodable? {
         switch self {
@@ -155,7 +155,7 @@ package enum Endpoint {
             return nil
         }
     }
-    
+
     /// Expected HTTP status code for successful responses.
     var expectedStatusCode: Int {
         switch self {
@@ -169,8 +169,8 @@ package enum Endpoint {
 
 /// HTTP method enumeration.
 package enum HTTPMethod: String {
-    case GET = "GET"
-    case POST = "POST"
-    case PATCH = "PATCH"
-    case DELETE = "DELETE"
+    case GET
+    case POST
+    case PATCH
+    case DELETE
 }

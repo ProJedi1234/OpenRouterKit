@@ -544,9 +544,9 @@ struct ChatRequestParametersIntegrationTests {
                 Message(role: .user, content: .string("What's the weather in NYC and London? Use the tool for each."))
             ],
             model: "google/gemini-3-flash-preview",
-            maxCompletionTokens: 200,
             tools: [weatherTool],
             toolChoice: .required,
+            maxCompletionTokens: 200,
             parallelToolCalls: true
         )
 

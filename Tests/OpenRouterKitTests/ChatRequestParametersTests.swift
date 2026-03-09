@@ -319,6 +319,7 @@ struct ChatRequestParametersUnitTests {
         #expect(decoded.width == 512)
         #expect(decoded.height == 512)
         #expect(decoded.steps == 20)
+        #expect(decoded.guidanceScale == 7.0)
         #expect(decoded.seed == 99)
     }
 

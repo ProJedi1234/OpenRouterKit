@@ -101,6 +101,7 @@ public struct ChatResponseModality: RawRepresentable, Codable, Sendable, Hashabl
     }
 
     public static let text = Self(rawValue: "text")
+    public static let image = Self(rawValue: "image")
     public static let audio = Self(rawValue: "audio")
 }
 

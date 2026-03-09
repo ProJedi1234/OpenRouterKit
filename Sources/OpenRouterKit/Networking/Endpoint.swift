@@ -18,17 +18,39 @@ package enum Endpoint {
     case updateKey(hash: String, UpdateAPIKeyRequest)
     case deleteKey(hash: String)
     case getCurrentKey
-    
+
+    // Guardrails CRUD
+    case listGuardrails(offset: String?)
+    case createGuardrail(CreateGuardrailRequest)
+    case getGuardrail(id: String)
+    case updateGuardrail(id: String, UpdateGuardrailRequest)
+    case deleteGuardrail(id: String)
+
+    // Guardrails Assignments
+    case listAllKeyAssignments
+    case listAllMemberAssignments
+    case listGuardrailKeyAssignments(guardrailId: String)
+    case assignGuardrailKeys(guardrailId: String, GuardrailAssignKeysRequest)
+    case removeGuardrailKeys(guardrailId: String, GuardrailAssignKeysRequest)
+    case listGuardrailMemberAssignments(guardrailId: String)
+    case assignGuardrailMembers(guardrailId: String, GuardrailAssignMembersRequest)
+    case removeGuardrailMembers(guardrailId: String, GuardrailAssignMembersRequest)
+
     /// The HTTP method for this endpoint.
     var method: HTTPMethod {
         switch self {
-        case .chatCompletions, .createKey:
+        case .chatCompletions, .createKey, .createGuardrail,
+             .assignGuardrailKeys, .removeGuardrailKeys,
+             .assignGuardrailMembers, .removeGuardrailMembers:
             return .POST
-        case .updateKey:
+        case .updateKey, .updateGuardrail:
             return .PATCH
-        case .deleteKey:
+        case .deleteKey, .deleteGuardrail:
             return .DELETE
-        case .listModels, .listModelsForUser, .listKeys, .getKey, .getCurrentKey:
+        case .listModels, .listModelsForUser, .listKeys, .getKey, .getCurrentKey,
+             .listGuardrails, .getGuardrail,
+             .listAllKeyAssignments, .listAllMemberAssignments,
+             .listGuardrailKeyAssignments, .listGuardrailMemberAssignments:
             return .GET
         }
     }
@@ -48,6 +70,22 @@ package enum Endpoint {
             return "/keys/\(hash)"
         case .getCurrentKey:
             return "/key"
+        case .listGuardrails, .createGuardrail:
+            return "/guardrails"
+        case .getGuardrail(let id), .updateGuardrail(let id, _), .deleteGuardrail(let id):
+            return "/guardrails/\(id)"
+        case .listAllKeyAssignments:
+            return "/guardrails/assignments/keys"
+        case .listAllMemberAssignments:
+            return "/guardrails/assignments/members"
+        case .listGuardrailKeyAssignments(let guardrailId), .assignGuardrailKeys(let guardrailId, _):
+            return "/guardrails/\(guardrailId)/assignments/keys"
+        case .removeGuardrailKeys(let guardrailId, _):
+            return "/guardrails/\(guardrailId)/assignments/keys/remove"
+        case .listGuardrailMemberAssignments(let guardrailId), .assignGuardrailMembers(let guardrailId, _):
+            return "/guardrails/\(guardrailId)/assignments/members"
+        case .removeGuardrailMembers(let guardrailId, _):
+            return "/guardrails/\(guardrailId)/assignments/members/remove"
         }
     }
     
@@ -78,6 +116,12 @@ package enum Endpoint {
                 items.append(URLQueryItem(name: "offset", value: offset))
             }
             return items.isEmpty ? nil : items
+        case .listGuardrails(let offset):
+            var items: [URLQueryItem] = []
+            if let offset {
+                items.append(URLQueryItem(name: "offset", value: offset))
+            }
+            return items.isEmpty ? nil : items
         default:
             return nil
         }
@@ -92,6 +136,14 @@ package enum Endpoint {
             return request
         case .updateKey(_, let request):
             return request
+        case .createGuardrail(let request):
+            return request
+        case .updateGuardrail(_, let request):
+            return request
+        case .assignGuardrailKeys(_, let request), .removeGuardrailKeys(_, let request):
+            return request
+        case .assignGuardrailMembers(_, let request), .removeGuardrailMembers(_, let request):
+            return request
         default:
             return nil
         }
@@ -100,7 +152,7 @@ package enum Endpoint {
     /// Expected HTTP status code for successful responses.
     var expectedStatusCode: Int {
         switch self {
-        case .createKey:
+        case .createKey, .createGuardrail:
             return 201
         default:
             return 200

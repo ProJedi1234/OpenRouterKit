@@ -406,6 +406,7 @@ struct ChatRequestParametersUnitTests {
         #expect(request.imageConfig?.width == 256)
         #expect(request.imageConfig?.height == 256)
         #expect(request.imageConfig?.steps == 10)
+        #expect(request.imageConfig?.guidanceScale == 5.0)
     }
 
     // MARK: - maxTokens and maxCompletionTokens coexistence
@@ -556,8 +557,7 @@ struct ChatRequestParametersIntegrationTests {
         // With parallel tool calls and required, we expect tool calls
         if choice.finish_reason == "tool_calls" {
             let toolCalls = try #require(choice.message.toolCalls)
-            #expect(toolCalls.count >= 1, "Should have at least one tool call")
-            print("Parallel tool calls returned \(toolCalls.count) call(s)")
+            #expect(toolCalls.count >= 1, "Should have at least one tool call, got \(toolCalls.count)")
         }
     }
 }

@@ -18,8 +18,8 @@ final class GuardrailsService: GuardrailsServiceProtocol {
 
     // MARK: - CRUD
 
-    func list(offset: String?) async throws -> GuardrailListResponse {
-        try await httpClient.execute(.listGuardrails(offset: offset), expectedStatusCode: 200)
+    func list(offset: String?, limit: Int?) async throws -> GuardrailListResponse {
+        try await httpClient.execute(.listGuardrails(offset: offset, limit: limit), expectedStatusCode: 200)
     }
 
     func create(request: CreateGuardrailRequest) async throws -> GuardrailResponse {
@@ -40,12 +40,12 @@ final class GuardrailsService: GuardrailsServiceProtocol {
 
     // MARK: - Assignments (Keys)
 
-    func listAllKeyAssignments() async throws -> GuardrailKeyAssignmentListResponse {
-        try await httpClient.execute(.listAllKeyAssignments, expectedStatusCode: 200)
+    func listAllKeyAssignments(offset: String?, limit: Int?) async throws -> GuardrailKeyAssignmentListResponse {
+        try await httpClient.execute(.listAllKeyAssignments(offset: offset, limit: limit), expectedStatusCode: 200)
     }
 
-    func listKeyAssignments(guardrailId: String) async throws -> GuardrailKeyAssignmentListResponse {
-        try await httpClient.execute(.listGuardrailKeyAssignments(guardrailId: guardrailId), expectedStatusCode: 200)
+    func listKeyAssignments(guardrailId: String, offset: String?, limit: Int?) async throws -> GuardrailKeyAssignmentListResponse {
+        try await httpClient.execute(.listGuardrailKeyAssignments(guardrailId: guardrailId, offset: offset, limit: limit), expectedStatusCode: 200)
     }
 
     func assignKeys(guardrailId: String, request: GuardrailAssignKeysRequest) async throws -> GuardrailAssignKeysResponse {
@@ -58,12 +58,12 @@ final class GuardrailsService: GuardrailsServiceProtocol {
 
     // MARK: - Assignments (Members)
 
-    func listAllMemberAssignments() async throws -> GuardrailMemberAssignmentListResponse {
-        try await httpClient.execute(.listAllMemberAssignments, expectedStatusCode: 200)
+    func listAllMemberAssignments(offset: String?, limit: Int?) async throws -> GuardrailMemberAssignmentListResponse {
+        try await httpClient.execute(.listAllMemberAssignments(offset: offset, limit: limit), expectedStatusCode: 200)
     }
 
-    func listMemberAssignments(guardrailId: String) async throws -> GuardrailMemberAssignmentListResponse {
-        try await httpClient.execute(.listGuardrailMemberAssignments(guardrailId: guardrailId), expectedStatusCode: 200)
+    func listMemberAssignments(guardrailId: String, offset: String?, limit: Int?) async throws -> GuardrailMemberAssignmentListResponse {
+        try await httpClient.execute(.listGuardrailMemberAssignments(guardrailId: guardrailId, offset: offset, limit: limit), expectedStatusCode: 200)
     }
 
     func assignMembers(guardrailId: String, request: GuardrailAssignMembersRequest) async throws -> GuardrailAssignMembersResponse {

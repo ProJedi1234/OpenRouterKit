@@ -137,10 +137,12 @@ public protocol GuardrailsServiceProtocol: Sendable {
 
     /// Lists all guardrails (paginated).
     ///
-    /// - Parameter offset: Optional pagination offset
+    /// - Parameters:
+    ///   - offset: Optional pagination offset
+    ///   - limit: Optional maximum number of results (max 100)
     /// - Returns: List of guardrails
     /// - Throws: OpenRouterError if the request fails
-    func list(offset: String?) async throws -> GuardrailListResponse
+    func list(offset: String?, limit: Int?) async throws -> GuardrailListResponse
 
     /// Creates a new guardrail.
     ///
@@ -176,23 +178,29 @@ public protocol GuardrailsServiceProtocol: Sendable {
 
     /// Lists all key assignments across all guardrails.
     ///
+    /// - Parameters:
+    ///   - offset: Optional pagination offset
+    ///   - limit: Optional maximum number of results (max 100)
     /// - Returns: List of key assignments
     /// - Throws: OpenRouterError if the request fails
-    func listAllKeyAssignments() async throws -> GuardrailKeyAssignmentListResponse
+    func listAllKeyAssignments(offset: String?, limit: Int?) async throws -> GuardrailKeyAssignmentListResponse
 
     /// Lists key assignments for a specific guardrail.
     ///
-    /// - Parameter guardrailId: The guardrail identifier
+    /// - Parameters:
+    ///   - guardrailId: The guardrail identifier
+    ///   - offset: Optional pagination offset
+    ///   - limit: Optional maximum number of results (max 100)
     /// - Returns: List of key assignments
     /// - Throws: OpenRouterError if the request fails
-    func listKeyAssignments(guardrailId: String) async throws -> GuardrailKeyAssignmentListResponse
+    func listKeyAssignments(guardrailId: String, offset: String?, limit: Int?) async throws -> GuardrailKeyAssignmentListResponse
 
     /// Bulk assigns keys to a guardrail.
     ///
     /// - Parameters:
     ///   - guardrailId: The guardrail identifier
     ///   - request: The key assignment request
-    /// - Returns: The resulting key assignments
+    /// - Returns: The number of keys assigned
     /// - Throws: OpenRouterError if the request fails
     func assignKeys(guardrailId: String, request: GuardrailAssignKeysRequest) async throws -> GuardrailAssignKeysResponse
 
@@ -201,7 +209,7 @@ public protocol GuardrailsServiceProtocol: Sendable {
     /// - Parameters:
     ///   - guardrailId: The guardrail identifier
     ///   - request: The key removal request
-    /// - Returns: The remaining key assignments
+    /// - Returns: The number of keys unassigned
     /// - Throws: OpenRouterError if the request fails
     func removeKeys(guardrailId: String, request: GuardrailAssignKeysRequest) async throws -> GuardrailAssignKeysResponse
 
@@ -209,23 +217,29 @@ public protocol GuardrailsServiceProtocol: Sendable {
 
     /// Lists all member assignments across all guardrails.
     ///
+    /// - Parameters:
+    ///   - offset: Optional pagination offset
+    ///   - limit: Optional maximum number of results (max 100)
     /// - Returns: List of member assignments
     /// - Throws: OpenRouterError if the request fails
-    func listAllMemberAssignments() async throws -> GuardrailMemberAssignmentListResponse
+    func listAllMemberAssignments(offset: String?, limit: Int?) async throws -> GuardrailMemberAssignmentListResponse
 
     /// Lists member assignments for a specific guardrail.
     ///
-    /// - Parameter guardrailId: The guardrail identifier
+    /// - Parameters:
+    ///   - guardrailId: The guardrail identifier
+    ///   - offset: Optional pagination offset
+    ///   - limit: Optional maximum number of results (max 100)
     /// - Returns: List of member assignments
     /// - Throws: OpenRouterError if the request fails
-    func listMemberAssignments(guardrailId: String) async throws -> GuardrailMemberAssignmentListResponse
+    func listMemberAssignments(guardrailId: String, offset: String?, limit: Int?) async throws -> GuardrailMemberAssignmentListResponse
 
     /// Bulk assigns members to a guardrail.
     ///
     /// - Parameters:
     ///   - guardrailId: The guardrail identifier
     ///   - request: The member assignment request
-    /// - Returns: The resulting member assignments
+    /// - Returns: The number of members assigned
     /// - Throws: OpenRouterError if the request fails
     func assignMembers(guardrailId: String, request: GuardrailAssignMembersRequest) async throws -> GuardrailAssignMembersResponse
 
@@ -234,7 +248,7 @@ public protocol GuardrailsServiceProtocol: Sendable {
     /// - Parameters:
     ///   - guardrailId: The guardrail identifier
     ///   - request: The member removal request
-    /// - Returns: The remaining member assignments
+    /// - Returns: The number of members unassigned
     /// - Throws: OpenRouterError if the request fails
     func removeMembers(guardrailId: String, request: GuardrailAssignMembersRequest) async throws -> GuardrailAssignMembersResponse
 }

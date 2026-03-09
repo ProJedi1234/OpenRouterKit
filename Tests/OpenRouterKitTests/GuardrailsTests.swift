@@ -71,7 +71,8 @@ struct GuardrailsTypesTests {
             "data": [
                 {"id": "gr_1", "name": "First"},
                 {"id": "gr_2", "name": "Second"}
-            ]
+            ],
+            "total_count": 42
         }
         """.data(using: .utf8)!
 
@@ -79,6 +80,19 @@ struct GuardrailsTypesTests {
         #expect(response.data.count == 2)
         #expect(response.data[0].id == "gr_1")
         #expect(response.data[1].name == "Second")
+        #expect(response.totalCount == 42)
+    }
+
+    @Test func testDecodeGuardrailListResponseWithoutTotalCount() throws {
+        let json = """
+        {
+            "data": [{"id": "gr_1", "name": "First"}]
+        }
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(GuardrailListResponse.self, from: json)
+        #expect(response.data.count == 1)
+        #expect(response.totalCount == nil)
     }
 
     @Test func testDecodeGuardrailResponse() throws {
@@ -165,62 +179,128 @@ struct GuardrailsTypesTests {
     }
 
     @Test func testEncodeAssignMembersRequest() throws {
-        let request = GuardrailAssignMembersRequest(userIds: ["user_1", "user_2"])
+        let request = GuardrailAssignMembersRequest(memberUserIds: ["user_1", "user_2"])
 
         let data = try JSONEncoder().encode(request)
         let dict = try JSONSerialization.jsonObject(with: data) as! [String: Any]
 
-        #expect(dict["user_ids"] as? [String] == ["user_1", "user_2"])
+        #expect(dict["member_user_ids"] as? [String] == ["user_1", "user_2"])
     }
 
     // MARK: - Assignment Decoding
 
     @Test func testDecodeKeyAssignment() throws {
         let json = """
-        {"guardrail_id": "gr_1", "key_hash": "abc123"}
+        {
+            "id": "ka_1",
+            "key_hash": "abc123",
+            "guardrail_id": "gr_1",
+            "key_name": "Production Key",
+            "key_label": "prod-key",
+            "assigned_by": "user_42",
+            "created_at": "2025-01-01T00:00:00Z"
+        }
         """.data(using: .utf8)!
 
         let assignment = try JSONDecoder().decode(GuardrailKeyAssignment.self, from: json)
-        #expect(assignment.guardrailId == "gr_1")
+        #expect(assignment.id == "ka_1")
         #expect(assignment.keyHash == "abc123")
+        #expect(assignment.guardrailId == "gr_1")
+        #expect(assignment.keyName == "Production Key")
+        #expect(assignment.keyLabel == "prod-key")
+        #expect(assignment.assignedBy == "user_42")
+        #expect(assignment.createdAt == "2025-01-01T00:00:00Z")
     }
 
     @Test func testDecodeMemberAssignment() throws {
         let json = """
-        {"guardrail_id": "gr_1", "user_id": "user_42"}
+        {
+            "id": "ma_1",
+            "user_id": "user_42",
+            "organization_id": "org_1",
+            "guardrail_id": "gr_1",
+            "assigned_by": "admin_1",
+            "created_at": "2025-01-01T00:00:00Z"
+        }
         """.data(using: .utf8)!
 
         let assignment = try JSONDecoder().decode(GuardrailMemberAssignment.self, from: json)
-        #expect(assignment.guardrailId == "gr_1")
+        #expect(assignment.id == "ma_1")
         #expect(assignment.userId == "user_42")
+        #expect(assignment.organizationId == "org_1")
+        #expect(assignment.guardrailId == "gr_1")
+        #expect(assignment.assignedBy == "admin_1")
+        #expect(assignment.createdAt == "2025-01-01T00:00:00Z")
     }
 
     @Test func testDecodeKeyAssignmentListResponse() throws {
         let json = """
         {
             "data": [
-                {"guardrail_id": "gr_1", "key_hash": "h1"},
-                {"guardrail_id": "gr_1", "key_hash": "h2"}
-            ]
+                {"id": "ka_1", "key_hash": "h1", "guardrail_id": "gr_1"},
+                {"id": "ka_2", "key_hash": "h2", "guardrail_id": "gr_1"}
+            ],
+            "total_count": 2
         }
         """.data(using: .utf8)!
 
         let response = try JSONDecoder().decode(GuardrailKeyAssignmentListResponse.self, from: json)
         #expect(response.data.count == 2)
+        #expect(response.totalCount == 2)
     }
 
     @Test func testDecodeMemberAssignmentListResponse() throws {
         let json = """
         {
             "data": [
-                {"guardrail_id": "gr_1", "user_id": "u1"}
-            ]
+                {"id": "ma_1", "user_id": "u1", "guardrail_id": "gr_1"}
+            ],
+            "total_count": 1
         }
         """.data(using: .utf8)!
 
         let response = try JSONDecoder().decode(GuardrailMemberAssignmentListResponse.self, from: json)
         #expect(response.data.count == 1)
         #expect(response.data[0].userId == "u1")
+        #expect(response.totalCount == 1)
+    }
+
+    @Test func testDecodeBulkAssignKeysResponse() throws {
+        let json = """
+        {"assigned_count": 3}
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(GuardrailAssignKeysResponse.self, from: json)
+        #expect(response.assignedCount == 3)
+        #expect(response.unassignedCount == nil)
+    }
+
+    @Test func testDecodeBulkUnassignKeysResponse() throws {
+        let json = """
+        {"unassigned_count": 2}
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(GuardrailAssignKeysResponse.self, from: json)
+        #expect(response.unassignedCount == 2)
+        #expect(response.assignedCount == nil)
+    }
+
+    @Test func testDecodeBulkAssignMembersResponse() throws {
+        let json = """
+        {"assigned_count": 5}
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(GuardrailAssignMembersResponse.self, from: json)
+        #expect(response.assignedCount == 5)
+    }
+
+    @Test func testDecodeBulkUnassignMembersResponse() throws {
+        let json = """
+        {"unassigned_count": 1}
+        """.data(using: .utf8)!
+
+        let response = try JSONDecoder().decode(GuardrailAssignMembersResponse.self, from: json)
+        #expect(response.unassignedCount == 1)
     }
 
     // MARK: - Reset Interval
@@ -236,18 +316,20 @@ struct GuardrailsTypesTests {
 struct GuardrailsEndpointTests {
 
     @Test func testListGuardrailsEndpoint() {
-        let endpoint = Endpoint.listGuardrails(offset: nil)
+        let endpoint = Endpoint.listGuardrails(offset: nil, limit: nil)
         #expect(endpoint.method == .GET)
         #expect(endpoint.path == "/guardrails")
         #expect(endpoint.queryItems == nil)
         #expect(endpoint.body == nil)
     }
 
-    @Test func testListGuardrailsWithOffset() {
-        let endpoint = Endpoint.listGuardrails(offset: "abc123")
-        #expect(endpoint.queryItems?.count == 1)
-        #expect(endpoint.queryItems?.first?.name == "offset")
-        #expect(endpoint.queryItems?.first?.value == "abc123")
+    @Test func testListGuardrailsWithPagination() {
+        let endpoint = Endpoint.listGuardrails(offset: "abc123", limit: 50)
+        #expect(endpoint.queryItems?.count == 2)
+        #expect(endpoint.queryItems?[0].name == "offset")
+        #expect(endpoint.queryItems?[0].value == "abc123")
+        #expect(endpoint.queryItems?[1].name == "limit")
+        #expect(endpoint.queryItems?[1].value == "50")
     }
 
     @Test func testCreateGuardrailEndpoint() {
@@ -281,19 +363,24 @@ struct GuardrailsEndpointTests {
     }
 
     @Test func testListAllKeyAssignmentsEndpoint() {
-        let endpoint = Endpoint.listAllKeyAssignments
+        let endpoint = Endpoint.listAllKeyAssignments(offset: nil, limit: nil)
         #expect(endpoint.method == .GET)
         #expect(endpoint.path == "/guardrails/assignments/keys")
     }
 
+    @Test func testListAllKeyAssignmentsWithPagination() {
+        let endpoint = Endpoint.listAllKeyAssignments(offset: "off1", limit: 25)
+        #expect(endpoint.queryItems?.count == 2)
+    }
+
     @Test func testListAllMemberAssignmentsEndpoint() {
-        let endpoint = Endpoint.listAllMemberAssignments
+        let endpoint = Endpoint.listAllMemberAssignments(offset: nil, limit: nil)
         #expect(endpoint.method == .GET)
         #expect(endpoint.path == "/guardrails/assignments/members")
     }
 
     @Test func testListGuardrailKeyAssignmentsEndpoint() {
-        let endpoint = Endpoint.listGuardrailKeyAssignments(guardrailId: "gr_1")
+        let endpoint = Endpoint.listGuardrailKeyAssignments(guardrailId: "gr_1", offset: nil, limit: nil)
         #expect(endpoint.method == .GET)
         #expect(endpoint.path == "/guardrails/gr_1/assignments/keys")
     }
@@ -314,20 +401,20 @@ struct GuardrailsEndpointTests {
     }
 
     @Test func testListGuardrailMemberAssignmentsEndpoint() {
-        let endpoint = Endpoint.listGuardrailMemberAssignments(guardrailId: "gr_1")
+        let endpoint = Endpoint.listGuardrailMemberAssignments(guardrailId: "gr_1", offset: nil, limit: nil)
         #expect(endpoint.method == .GET)
         #expect(endpoint.path == "/guardrails/gr_1/assignments/members")
     }
 
     @Test func testAssignGuardrailMembersEndpoint() {
-        let request = GuardrailAssignMembersRequest(userIds: ["u1"])
+        let request = GuardrailAssignMembersRequest(memberUserIds: ["u1"])
         let endpoint = Endpoint.assignGuardrailMembers(guardrailId: "gr_1", request)
         #expect(endpoint.method == .POST)
         #expect(endpoint.path == "/guardrails/gr_1/assignments/members")
     }
 
     @Test func testRemoveGuardrailMembersEndpoint() {
-        let request = GuardrailAssignMembersRequest(userIds: ["u1"])
+        let request = GuardrailAssignMembersRequest(memberUserIds: ["u1"])
         let endpoint = Endpoint.removeGuardrailMembers(guardrailId: "gr_1", request)
         #expect(endpoint.method == .POST)
         #expect(endpoint.path == "/guardrails/gr_1/assignments/members/remove")

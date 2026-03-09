@@ -184,9 +184,9 @@ public struct UpdateGuardrailRequest: Codable, Sendable {
     }
 }
 
-/// Request body for bulk assigning keys to a guardrail.
+/// Request body for bulk assigning or unassigning keys to/from a guardrail.
 public struct GuardrailAssignKeysRequest: Codable, Sendable {
-    /// List of API key hashes to assign.
+    /// List of API key hashes to assign or unassign.
     public let keyHashes: [String]
 
     enum CodingKeys: String, CodingKey {
@@ -198,17 +198,17 @@ public struct GuardrailAssignKeysRequest: Codable, Sendable {
     }
 }
 
-/// Request body for bulk assigning members to a guardrail.
+/// Request body for bulk assigning or unassigning members to/from a guardrail.
 public struct GuardrailAssignMembersRequest: Codable, Sendable {
-    /// List of member user IDs to assign.
-    public let userIds: [String]
+    /// List of member user IDs to assign or unassign.
+    public let memberUserIds: [String]
 
     enum CodingKeys: String, CodingKey {
-        case userIds = "user_ids"
+        case memberUserIds = "member_user_ids"
     }
 
-    public init(userIds: [String]) {
-        self.userIds = userIds
+    public init(memberUserIds: [String]) {
+        self.memberUserIds = memberUserIds
     }
 }
 
@@ -216,29 +216,65 @@ public struct GuardrailAssignMembersRequest: Codable, Sendable {
 
 /// Represents a key assignment to a guardrail.
 public struct GuardrailKeyAssignment: Codable, Sendable {
-    /// The guardrail ID.
-    public let guardrailId: String
+    /// Unique identifier for the assignment.
+    public let id: String
 
     /// The API key hash.
     public let keyHash: String
 
+    /// The guardrail ID.
+    public let guardrailId: String
+
+    /// Name of the assigned key.
+    public let keyName: String?
+
+    /// Label of the assigned key.
+    public let keyLabel: String?
+
+    /// User ID of who created the assignment.
+    public let assignedBy: String?
+
+    /// ISO 8601 timestamp of when the assignment was created.
+    public let createdAt: String?
+
     enum CodingKeys: String, CodingKey {
-        case guardrailId = "guardrail_id"
+        case id
         case keyHash = "key_hash"
+        case guardrailId = "guardrail_id"
+        case keyName = "key_name"
+        case keyLabel = "key_label"
+        case assignedBy = "assigned_by"
+        case createdAt = "created_at"
     }
 }
 
 /// Represents a member assignment to a guardrail.
 public struct GuardrailMemberAssignment: Codable, Sendable {
-    /// The guardrail ID.
-    public let guardrailId: String
+    /// Unique identifier for the assignment.
+    public let id: String
 
     /// The member user ID.
     public let userId: String
 
+    /// The organization ID.
+    public let organizationId: String?
+
+    /// The guardrail ID.
+    public let guardrailId: String
+
+    /// User ID of who created the assignment.
+    public let assignedBy: String?
+
+    /// ISO 8601 timestamp of when the assignment was created.
+    public let createdAt: String?
+
     enum CodingKeys: String, CodingKey {
-        case guardrailId = "guardrail_id"
+        case id
         case userId = "user_id"
+        case organizationId = "organization_id"
+        case guardrailId = "guardrail_id"
+        case assignedBy = "assigned_by"
+        case createdAt = "created_at"
     }
 }
 
@@ -248,6 +284,14 @@ public struct GuardrailMemberAssignment: Codable, Sendable {
 public struct GuardrailListResponse: Codable, Sendable {
     /// List of guardrails.
     public let data: [Guardrail]
+
+    /// Total number of guardrails.
+    public let totalCount: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case data
+        case totalCount = "total_count"
+    }
 }
 
 /// Response wrapper for a single guardrail.
@@ -266,22 +310,54 @@ public struct DeleteGuardrailResponse: Codable, Sendable {
 public struct GuardrailKeyAssignmentListResponse: Codable, Sendable {
     /// List of key assignments.
     public let data: [GuardrailKeyAssignment]
+
+    /// Total number of key assignments.
+    public let totalCount: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case data
+        case totalCount = "total_count"
+    }
 }
 
 /// Response wrapper for listing member assignments.
 public struct GuardrailMemberAssignmentListResponse: Codable, Sendable {
     /// List of member assignments.
     public let data: [GuardrailMemberAssignment]
+
+    /// Total number of member assignments.
+    public let totalCount: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case data
+        case totalCount = "total_count"
+    }
 }
 
 /// Response wrapper for bulk key assignment operations.
 public struct GuardrailAssignKeysResponse: Codable, Sendable {
-    /// List of key assignments after the operation.
-    public let data: [GuardrailKeyAssignment]
+    /// Number of keys assigned.
+    public let assignedCount: Int?
+
+    /// Number of keys unassigned.
+    public let unassignedCount: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case assignedCount = "assigned_count"
+        case unassignedCount = "unassigned_count"
+    }
 }
 
 /// Response wrapper for bulk member assignment operations.
 public struct GuardrailAssignMembersResponse: Codable, Sendable {
-    /// List of member assignments after the operation.
-    public let data: [GuardrailMemberAssignment]
+    /// Number of members assigned.
+    public let assignedCount: Int?
+
+    /// Number of members unassigned.
+    public let unassignedCount: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case assignedCount = "assigned_count"
+        case unassignedCount = "unassigned_count"
+    }
 }

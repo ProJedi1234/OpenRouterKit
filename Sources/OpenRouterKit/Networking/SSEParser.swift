@@ -42,23 +42,31 @@ package enum SSEParser {
         let jsonString = String(trimmedLine.dropFirst(6))
         guard jsonString != "[DONE]",
               let jsonData = jsonString.data(using: .utf8),
-              let delta = try? JSONDecoder().decode(StreamingDelta.self, from: jsonData),
-              let choice = delta.choices.first else { return [] }
+              let delta = try? JSONDecoder().decode(StreamingDelta.self, from: jsonData)
+        else { return [] }
 
         var events: [ChatStreamEvent] = []
 
-        if let content = choice.delta.content, !content.isEmpty {
-            events.append(.text(content))
-        }
+        if let choice = delta.choices.first {
+            if let content = choice.delta.content, !content.isEmpty {
+                events.append(.text(content))
+            }
 
-        if let toolCallDeltas = choice.delta.toolCalls {
-            for toolCallDelta in toolCallDeltas {
-                events.append(.toolCallDelta(toolCallDelta))
+            if let toolCallDeltas = choice.delta.toolCalls {
+                for toolCallDelta in toolCallDeltas {
+                    events.append(.toolCallDelta(toolCallDelta))
+                }
+            }
+
+            if let finishReason = choice.finish_reason {
+                events.append(.finished(finishReason: finishReason, usage: delta.usage))
             }
         }
 
-        if let finishReason = choice.finish_reason {
-            events.append(.finished(finishReason: finishReason, usage: delta.usage))
+        // Handle usage-only chunks (empty choices with usage data).
+        // OpenRouter sends a final SSE message with choices: [] and usage populated.
+        if delta.choices.isEmpty, let usage = delta.usage {
+            events.append(.finished(finishReason: nil, usage: usage))
         }
 
         return events

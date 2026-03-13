@@ -124,4 +124,57 @@ struct SSEParserTests {
             Issue.record("Expected .finished event second")
         }
     }
+
+    // MARK: - Usage data tests
+
+    @Test func testProcessLineAsEventsWithUsageOnlyChunk() {
+        let line = "data: {\"id\":\"gen-xxx\",\"choices\":[],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":20,\"total_tokens\":30}}\n"
+        let events = SSEParser.processLineAsEvents(line)
+        #expect(events.count == 1)
+        if case .finished(let reason, let usage) = events.first {
+            #expect(reason == nil)
+            #expect(usage?.prompt_tokens == 10)
+            #expect(usage?.completion_tokens == 20)
+            #expect(usage?.total_tokens == 30)
+        } else {
+            Issue.record("Expected .finished event with usage")
+        }
+    }
+
+    @Test func testProcessLineAsEventsWithFinishReasonAndUsage() {
+        let line = "data: {\"id\":\"gen-123\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":15,\"total_tokens\":20}}\n"
+        let events = SSEParser.processLineAsEvents(line)
+        #expect(events.count == 1)
+        if case .finished(let reason, let usage) = events.first {
+            #expect(reason == "stop")
+            #expect(usage?.prompt_tokens == 5)
+            #expect(usage?.completion_tokens == 15)
+            #expect(usage?.total_tokens == 20)
+        } else {
+            Issue.record("Expected .finished event with reason and usage")
+        }
+    }
+
+    @Test func testProcessLineAsEventsWithNormalTextChunkNoUsage() {
+        let line = "data: {\"id\":\"gen-123\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"hello\"},\"finish_reason\":null}]}\n"
+        let events = SSEParser.processLineAsEvents(line)
+        #expect(events.count == 1)
+        if case .text(let content) = events.first {
+            #expect(content == "hello")
+        } else {
+            Issue.record("Expected .text event")
+        }
+    }
+
+    @Test func testProcessLineAsEventsWithToolCallsFinishReason() {
+        let line = "data: {\"id\":\"gen-123\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"tool_calls\"}]}\n"
+        let events = SSEParser.processLineAsEvents(line)
+        #expect(events.count == 1)
+        if case .finished(let reason, let usage) = events.first {
+            #expect(reason == "tool_calls")
+            #expect(usage == nil)
+        } else {
+            Issue.record("Expected .finished event with tool_calls reason")
+        }
+    }
 }

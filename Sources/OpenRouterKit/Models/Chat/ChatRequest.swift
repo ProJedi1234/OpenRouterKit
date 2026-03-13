@@ -23,68 +23,68 @@ import Foundation
 public struct ChatRequest: Codable, Sendable {
     /// Either "messages" or "prompt" is required.
     public var messages: [Message]?
-    
+
     /// Alternative to messages - a simple prompt string.
     public var prompt: String?
-    
+
     /// Model identifier to use for the completion.
     public var model: String?
-    
+
     /// Response format configuration.
     public var responseFormat: ResponseFormat?
-    
+
     /// Text indicating where to stop generating.
     public var stop: [String]?
-    
+
     /// Enable streaming responses.
     public var stream: Bool?
-    
+
     /// Maximum number of tokens to generate.
     public var maxTokens: Int?
-    
+
     /// Sampling temperature; lower values mean more conservative sampling.
     /// Range typically 0.0 to 2.0.
     public var temperature: Float?
-    
+
     /// Nucleus sampling parameter. Controls diversity via nucleus sampling.
     public var topP: Float?
-    
+
     /// The total number of tokens to consider (not available for OpenAI models).
     public var topK: Int?
-    
+
     /// Frequency penalty; the higher the value, the less often words will be repeated.
     public var frequencyPenalty: Float?
-    
+
     /// Presence penalty; increases the likelihood of the model talking about new topics.
     public var presencePenalty: Float?
-    
+
     /// Repetition penalty; penalizes repeating phrases.
     public var repetitionPenalty: Float?
-    
+
     /// Seed for random generation (specific to OpenAI).
     public var seed: Int?
-    
+
     /// List of tools available for use.
     public var tools: [Tool]?
-    
+
     /// Choice of tool for the request.
     public var toolChoice: ToolChoice?
-    
+
     /// Logit bias for modifying the generation process.
     public var logitBias: [Int: Float]?
-    
+
     /// Transforms to apply to the input prompt.
     public var transforms: [String]?
-    
+
     /// List of models to use (for routing).
     public var models: [String]?
-    
+
     /// Route option, possible values: 'fallback'.
     public var route: String?
-    
+
     /// Provider-specific preferences.
     public var provider: ProviderPreferences?
-    
+
     /// Reasoning configuration for advanced reasoning capabilities.
     public var reasoning: ReasoningConfiguration?
 
@@ -95,7 +95,7 @@ public struct ChatRequest: Codable, Sendable {
              repetitionPenalty = "repetition_penalty", seed, tools, toolChoice = "tool_choice",
              logitBias = "logit_bias", transforms, models, route, provider, reasoning
     }
-    
+
     /// Creates a new chat request.
     ///
     /// - Parameters:

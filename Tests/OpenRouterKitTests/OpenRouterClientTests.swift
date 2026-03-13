@@ -29,12 +29,12 @@ struct OpenRouterClientTests {
 
         client = OpenRouterClient(apiKey: apiKey, siteURL: "https://github.com", siteName: "Swift OpenRouterKit Tests", session: session)
     }
-    
+
     @Test func testChatRequest() async throws {
         let messages: [Message] = [
             .init(role: .user, content: .string("Tell me a joke"))
         ]
-        
+
         let request = OpenRouterRequest(messages: messages, model: "google/gemini-3-flash-preview")
         let response = try await client.chat.send(request: request)
 
@@ -57,7 +57,7 @@ struct OpenRouterClientTests {
         #expect(!firstModel.id.isEmpty, "Model id should not be empty")
         #expect(!firstModel.name.isEmpty, "Model name should not be empty")
     }
-    
+
     /// URLSession streaming only works on Darwin. On non-Darwin platforms, use OpenRouterKitNIO instead.
     @Test(.enabled(if: isDarwin))
     func testStreamChatRequest() async throws {

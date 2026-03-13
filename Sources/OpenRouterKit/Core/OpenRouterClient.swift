@@ -23,16 +23,19 @@ import FoundationNetworking
 /// ```
 public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
     package let httpClient: HTTPClient
-    
+
     /// Service for chat completion operations.
     public let chat: ChatServiceProtocol
-    
+
     /// Service for model information operations.
     public let models: ModelsServiceProtocol
-    
+
     /// Service for API key management operations.
     public let keys: KeysServiceProtocol
-    
+
+    /// Service for guardrail management operations.
+    public let guardrails: GuardrailsServiceProtocol
+
     /// Creates a new OpenRouter client with a custom HTTP client implementation.
     ///
     /// Used internally by `OpenRouterKitNIO` to inject the NIO-based HTTP client.
@@ -43,6 +46,7 @@ public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
         self.chat = ChatService(httpClient: httpClient)
         self.models = ModelsService(httpClient: httpClient)
         self.keys = KeysService(httpClient: httpClient)
+        self.guardrails = GuardrailsService(httpClient: httpClient)
     }
 
     /// Creates a new OpenRouter client.

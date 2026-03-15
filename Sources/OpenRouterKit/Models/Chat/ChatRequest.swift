@@ -88,12 +88,59 @@ public struct ChatRequest: Codable, Sendable {
     /// Reasoning configuration for advanced reasoning capabilities.
     public var reasoning: ReasoningConfiguration?
 
+    /// Maximum number of completion tokens to generate (replacement for deprecated `maxTokens`).
+    public var maxCompletionTokens: Int?
+
+    /// Options for streaming responses (e.g., include usage statistics).
+    public var streamOptions: StreamOptions?
+
+    /// Whether to return log probabilities of the output tokens.
+    public var logprobs: Bool?
+
+    /// Number of most likely tokens to return at each position (0-20). Requires `logprobs` to be true.
+    public var topLogprobs: Int?
+
+    /// Whether to allow parallel tool calls.
+    public var parallelToolCalls: Bool?
+
+    /// Output modalities to generate (e.g., text, image, audio).
+    public var modalities: [String]?
+
+    /// A unique identifier representing the end-user.
+    public var user: String?
+
+    /// Key-value metadata pairs for the request (max 16 pairs).
+    public var metadata: [String: String]?
+
+    /// Session ID to group related requests.
+    public var sessionId: String?
+
+    /// Observability trace configuration.
+    public var trace: Trace?
+
+    /// Prompt caching configuration.
+    public var cacheControl: CacheControl?
+
+    /// Debug options (streaming only).
+    public var debug: DebugOptions?
+
+    /// Provider-specific image generation options.
+    public var imageConfig: ImageConfig?
+
     enum CodingKeys: String, CodingKey {
         case messages, prompt, model, responseFormat = "response_format", stop, stream,
              maxTokens = "max_tokens", temperature, topP = "top_p", topK = "top_k",
              frequencyPenalty = "frequency_penalty", presencePenalty = "presence_penalty",
              repetitionPenalty = "repetition_penalty", seed, tools, toolChoice = "tool_choice",
-             logitBias = "logit_bias", transforms, models, route, provider, reasoning
+             logitBias = "logit_bias", transforms, models, route, provider, reasoning,
+             maxCompletionTokens = "max_completion_tokens",
+             streamOptions = "stream_options", logprobs,
+             topLogprobs = "top_logprobs",
+             parallelToolCalls = "parallel_tool_calls",
+             modalities, user, metadata,
+             sessionId = "session_id", trace,
+             cacheControl = "cache_control", debug,
+             imageConfig = "image_config"
     }
     
     /// Creates a new chat request.
@@ -121,6 +168,19 @@ public struct ChatRequest: Codable, Sendable {
     ///   - route: Route option
     ///   - provider: Provider preferences
     ///   - reasoning: Reasoning configuration
+    ///   - maxCompletionTokens: Maximum completion tokens (replacement for deprecated maxTokens)
+    ///   - streamOptions: Options for streaming responses
+    ///   - logprobs: Whether to return log probabilities
+    ///   - topLogprobs: Number of most likely tokens to return (0-20)
+    ///   - parallelToolCalls: Whether to allow parallel tool calls
+    ///   - modalities: Output modalities to generate
+    ///   - user: End-user identifier
+    ///   - metadata: Key-value metadata pairs (max 16 pairs)
+    ///   - sessionId: Session ID to group related requests
+    ///   - trace: Observability trace configuration
+    ///   - cacheControl: Prompt caching configuration
+    ///   - debug: Debug options (streaming only)
+    ///   - imageConfig: Provider-specific image generation options
     public init(
         messages: [Message]? = nil,
         prompt: String? = nil,
@@ -143,7 +203,20 @@ public struct ChatRequest: Codable, Sendable {
         models: [String]? = nil,
         route: String? = nil,
         provider: ProviderPreferences? = nil,
-        reasoning: ReasoningConfiguration? = nil
+        reasoning: ReasoningConfiguration? = nil,
+        maxCompletionTokens: Int? = nil,
+        streamOptions: StreamOptions? = nil,
+        logprobs: Bool? = nil,
+        topLogprobs: Int? = nil,
+        parallelToolCalls: Bool? = nil,
+        modalities: [String]? = nil,
+        user: String? = nil,
+        metadata: [String: String]? = nil,
+        sessionId: String? = nil,
+        trace: Trace? = nil,
+        cacheControl: CacheControl? = nil,
+        debug: DebugOptions? = nil,
+        imageConfig: ImageConfig? = nil
     ) {
         self.messages = messages
         self.prompt = prompt
@@ -167,6 +240,19 @@ public struct ChatRequest: Codable, Sendable {
         self.route = route
         self.provider = provider
         self.reasoning = reasoning
+        self.maxCompletionTokens = maxCompletionTokens
+        self.streamOptions = streamOptions
+        self.logprobs = logprobs
+        self.topLogprobs = topLogprobs
+        self.parallelToolCalls = parallelToolCalls
+        self.modalities = modalities
+        self.user = user
+        self.metadata = metadata
+        self.sessionId = sessionId
+        self.trace = trace
+        self.cacheControl = cacheControl
+        self.debug = debug
+        self.imageConfig = imageConfig
     }
 }
 
@@ -193,5 +279,146 @@ public struct ProviderPreferences: Codable, Sendable {
     /// - Parameter order: Ordered list of provider names
     public init(order: [String]) {
         self.order = order
+    }
+}
+
+/// Options for streaming responses.
+public struct StreamOptions: Codable, Sendable {
+    /// Whether to include usage statistics in the streaming response.
+    public var includeUsage: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case includeUsage = "include_usage"
+    }
+
+    /// Creates new stream options.
+    ///
+    /// - Parameter includeUsage: Whether to include usage statistics
+    public init(includeUsage: Bool) {
+        self.includeUsage = includeUsage
+    }
+}
+
+/// Observability trace configuration for grouping and labeling requests.
+public struct Trace: Codable, Sendable {
+    /// Unique identifier for the trace.
+    public var traceId: String?
+
+    /// Name for the trace.
+    public var traceName: String?
+
+    /// Name for the span.
+    public var spanName: String?
+
+    /// Name for the generation.
+    public var generationName: String?
+
+    /// Parent span identifier.
+    public var parentSpanId: String?
+
+    enum CodingKeys: String, CodingKey {
+        case traceId = "trace_id"
+        case traceName = "trace_name"
+        case spanName = "span_name"
+        case generationName = "generation_name"
+        case parentSpanId = "parent_span_id"
+    }
+
+    /// Creates a new trace configuration.
+    ///
+    /// - Parameters:
+    ///   - traceId: Unique identifier for the trace
+    ///   - traceName: Name for the trace
+    ///   - spanName: Name for the span
+    ///   - generationName: Name for the generation
+    ///   - parentSpanId: Parent span identifier
+    public init(
+        traceId: String? = nil,
+        traceName: String? = nil,
+        spanName: String? = nil,
+        generationName: String? = nil,
+        parentSpanId: String? = nil
+    ) {
+        self.traceId = traceId
+        self.traceName = traceName
+        self.spanName = spanName
+        self.generationName = generationName
+        self.parentSpanId = parentSpanId
+    }
+}
+
+/// Prompt caching configuration.
+public struct CacheControl: Codable, Sendable {
+    /// The type of cache control (e.g., "ephemeral").
+    public var type: String
+
+    /// Creates a new cache control configuration.
+    ///
+    /// - Parameter type: The cache control type
+    public init(type: String) {
+        self.type = type
+    }
+}
+
+/// Debug options for streaming requests.
+public struct DebugOptions: Codable, Sendable {
+    /// Whether to echo the upstream request body in the response.
+    public var echoUpstreamBody: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case echoUpstreamBody = "echo_upstream_body"
+    }
+
+    /// Creates new debug options.
+    ///
+    /// - Parameter echoUpstreamBody: Whether to echo the upstream body
+    public init(echoUpstreamBody: Bool? = nil) {
+        self.echoUpstreamBody = echoUpstreamBody
+    }
+}
+
+/// Provider-specific image generation options.
+public struct ImageConfig: Codable, Sendable {
+    /// Image width.
+    public var width: Int?
+
+    /// Image height.
+    public var height: Int?
+
+    /// Number of inference steps.
+    public var steps: Int?
+
+    /// Classifier-free guidance scale.
+    public var guidanceScale: Float?
+
+    /// Seed for image generation.
+    public var seed: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case width, height, steps
+        case guidanceScale = "guidance_scale"
+        case seed
+    }
+
+    /// Creates a new image configuration.
+    ///
+    /// - Parameters:
+    ///   - width: Image width
+    ///   - height: Image height
+    ///   - steps: Number of inference steps
+    ///   - guidanceScale: Classifier-free guidance scale
+    ///   - seed: Seed for image generation
+    public init(
+        width: Int? = nil,
+        height: Int? = nil,
+        steps: Int? = nil,
+        guidanceScale: Float? = nil,
+        seed: Int? = nil
+    ) {
+        self.width = width
+        self.height = height
+        self.steps = steps
+        self.guidanceScale = guidanceScale
+        self.seed = seed
     }
 }

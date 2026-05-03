@@ -159,7 +159,7 @@ struct OpenRouterClientTests {
     @Test func testCreateEmbedding() async throws {
         let response = try await client.embeddings.create(
             request: EmbeddingRequest(
-                model: "openai/text-embedding-3-small",
+                model: "perplexity/pplx-embed-v1-0.6b",
                 input: .string("hello embeddings")
             )
         )

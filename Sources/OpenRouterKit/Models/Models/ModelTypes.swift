@@ -139,6 +139,7 @@ public enum ModelGroup: String, Codable, Sendable {
     case gpt = "GPT"
     case claude = "Claude"
     case gemini = "Gemini"
+    case gemma = "Gemma"
     case grok = "Grok"
     case cohere = "Cohere"
     case nova = "Nova"
@@ -266,6 +267,7 @@ public enum Parameter: String, Codable, Sendable {
     case presencePenalty = "presence_penalty"
     case repetitionPenalty = "repetition_penalty"
     case maxTokens = "max_tokens"
+    case maxCompletionTokens = "max_completion_tokens"
     case logitBias = "logit_bias"
     case logprobs
     case topLogprobs = "top_logprobs"

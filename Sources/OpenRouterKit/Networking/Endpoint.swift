@@ -10,6 +10,8 @@ import Foundation
 /// Represents an API endpoint for the OpenRouter service.
 package enum Endpoint {
     case chatCompletions(ChatRequest)
+    case createEmbedding(EmbeddingRequest)
+    case listEmbeddingModels
     case listModels(category: String?, supportedParameters: String?, useRSS: String?, useRSSChatLinks: String?)
     case listModelsForUser
     case listKeys(includeDisabled: Bool?, offset: String?)
@@ -22,13 +24,13 @@ package enum Endpoint {
     /// The HTTP method for this endpoint.
     var method: HTTPMethod {
         switch self {
-        case .chatCompletions, .createKey:
+        case .chatCompletions, .createKey, .createEmbedding:
             return .POST
         case .updateKey:
             return .PATCH
         case .deleteKey:
             return .DELETE
-        case .listModels, .listModelsForUser, .listKeys, .getKey, .getCurrentKey:
+        case .listModels, .listModelsForUser, .listEmbeddingModels, .listKeys, .getKey, .getCurrentKey:
             return .GET
         }
     }
@@ -38,6 +40,10 @@ package enum Endpoint {
         switch self {
         case .chatCompletions:
             return "/chat/completions"
+        case .createEmbedding:
+            return "/embeddings"
+        case .listEmbeddingModels:
+            return "/embeddings/models"
         case .listModels:
             return "/models"
         case .listModelsForUser:
@@ -87,6 +93,8 @@ package enum Endpoint {
     var body: Encodable? {
         switch self {
         case .chatCompletions(let request):
+            return request
+        case .createEmbedding(let request):
             return request
         case .createKey(let request):
             return request

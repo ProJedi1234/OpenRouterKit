@@ -1,14 +1,15 @@
 # OpenRouterKit
 
-![Swift 6.0+](https://img.shields.io/badge/Swift-6.0+-orange.svg)
-![Platforms](https://img.shields.io/badge/Platforms-iOS%20|%20macOS%20|%20tvOS%20|%20watchOS%20|%20Linux-blue.svg)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
+Swift 6.0+
+Platforms
+License
 
-A Swift SDK for the [OpenRouter](https://openrouter.ai/docs/quickstart) API. Chat completions, streaming, tool calling, image inputs, reasoning, model browsing, API key management — all with zero dependencies and native async/await.
+A Swift SDK for the [OpenRouter](https://openrouter.ai/docs/quickstart) API. Chat completions, embeddings, streaming, tool calling, image inputs, reasoning, model browsing, API key management — all with zero dependencies and native async/await.
 
 ## Features
 
 - **Chat Completions** — send messages and get responses, with full parameter control
+- **Embeddings** — generate vectors from text (or multimodal input) and list embedding-capable models
 - **Streaming** — real-time token-by-token text streaming and structured event streaming (Apple platforms)
 - **Tool Calling** — define tools, handle model-initiated function calls, and send results back
 - **Streaming Tool Calls** — reassemble incremental tool call deltas with `ToolCallAccumulator`
@@ -53,6 +54,42 @@ let request = ChatRequest(
 let response = try await client.chat.send(request: request)
 print(response.choices[0].message.content ?? "")
 ```
+
+## Embeddings
+
+Create embeddings and list models that support them ([API reference](https://openrouter.ai/docs/api/reference/embeddings)):
+
+```swift
+let response = try await client.embeddings.create(
+    request: EmbeddingRequest(
+        model: "openai/text-embedding-3-small",
+        input: .string("The quick brown fox jumps over the lazy dog")
+    )
+)
+
+if case .floats(let vector)? = response.data.first?.embedding {
+    print("Dimensions: \(vector.count)")
+}
+
+// Batch strings in one request
+let batch = try await client.embeddings.create(
+    request: EmbeddingRequest(
+        model: "openai/text-embedding-3-small",
+        input: .strings([
+            "Machine learning is a subset of artificial intelligence",
+            "Natural language processing enables computers to understand text"
+        ])
+    )
+)
+
+// List embedding models
+let embeddingModels = try await client.embeddings.listModels()
+for model in embeddingModels.data {
+    print(model.id)
+}
+```
+
+Optional fields include `encodingFormat` (`.float` or `.base64`), `dimensions`, `inputType`, `user`, and `provider` routing via `ProviderPreferences` (e.g. `order`, `allowFallbacks`, `dataCollection`). Multimodal input uses the same `ContentPart` text / `image_url` shape as chat messages, wrapped in `EmbeddingMultimodalBlock` and `EmbeddingInput.multimodalBlocks(...)`.
 
 The client also accepts optional `siteURL` and `siteName` parameters that show up in your OpenRouter dashboard, a custom `baseURL` if you need one, and a custom `URLSession` for full control over networking.
 
@@ -131,6 +168,7 @@ if response.choices[0].finish_reason == "tool_calls",
 ```
 
 Control tool selection with `ToolChoice`:
+
 - `.auto` — model decides whether to call tools (default)
 - `.none` — model will not call any tools
 - `.required` — model must call at least one tool
@@ -253,6 +291,8 @@ for model in allModels.data {
 // List models available to the current user
 let myModels = try await client.models.listForUser()
 ```
+
+Embedding-specific discovery uses `client.embeddings.listModels()` (see [Embeddings](#embeddings)).
 
 ## API Key Management
 

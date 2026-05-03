@@ -23,68 +23,68 @@ import Foundation
 public struct ChatRequest: Codable, Sendable {
     /// Either "messages" or "prompt" is required.
     public var messages: [Message]?
-    
+
     /// Alternative to messages - a simple prompt string.
     public var prompt: String?
-    
+
     /// Model identifier to use for the completion.
     public var model: String?
-    
+
     /// Response format configuration.
     public var responseFormat: ResponseFormat?
-    
+
     /// Text indicating where to stop generating.
     public var stop: [String]?
-    
+
     /// Enable streaming responses.
     public var stream: Bool?
-    
+
     /// Maximum number of tokens to generate.
     public var maxTokens: Int?
-    
+
     /// Sampling temperature; lower values mean more conservative sampling.
     /// Range typically 0.0 to 2.0.
     public var temperature: Float?
-    
+
     /// Nucleus sampling parameter. Controls diversity via nucleus sampling.
     public var topP: Float?
-    
+
     /// The total number of tokens to consider (not available for OpenAI models).
     public var topK: Int?
-    
+
     /// Frequency penalty; the higher the value, the less often words will be repeated.
     public var frequencyPenalty: Float?
-    
+
     /// Presence penalty; increases the likelihood of the model talking about new topics.
     public var presencePenalty: Float?
-    
+
     /// Repetition penalty; penalizes repeating phrases.
     public var repetitionPenalty: Float?
-    
+
     /// Seed for random generation (specific to OpenAI).
     public var seed: Int?
-    
+
     /// List of tools available for use.
     public var tools: [Tool]?
-    
+
     /// Choice of tool for the request.
     public var toolChoice: ToolChoice?
-    
+
     /// Logit bias for modifying the generation process.
     public var logitBias: [Int: Float]?
-    
+
     /// Transforms to apply to the input prompt.
     public var transforms: [String]?
-    
+
     /// List of models to use (for routing).
     public var models: [String]?
-    
+
     /// Route option, possible values: 'fallback'.
     public var route: String?
-    
+
     /// Provider-specific preferences.
     public var provider: ProviderPreferences?
-    
+
     /// Reasoning configuration for advanced reasoning capabilities.
     public var reasoning: ReasoningConfiguration?
 
@@ -95,7 +95,7 @@ public struct ChatRequest: Codable, Sendable {
              repetitionPenalty = "repetition_penalty", seed, tools, toolChoice = "tool_choice",
              logitBias = "logit_bias", transforms, models, route, provider, reasoning
     }
-    
+
     /// Creates a new chat request.
     ///
     /// - Parameters:
@@ -183,15 +183,58 @@ public struct ResponseFormat: Codable, Sendable {
     }
 }
 
-/// Represents provider preferences in a chat request.
-public struct ProviderPreferences: Codable, Sendable {
+/// Data collection preference for provider routing (embeddings and chat).
+public enum ProviderDataCollection: String, Codable, Sendable {
+    case deny
+    case allow
+}
+
+/// Represents provider preferences in a chat or embeddings request.
+public struct ProviderPreferences: Codable, Sendable, Equatable {
     /// Ordered list of preferred providers.
     public let order: [String]
 
+    /// Whether backup providers may serve the request when the primary is unavailable.
+    public let allowFallbacks: Bool?
+
+    /// Restrict routing to providers that meet this data collection policy.
+    public let dataCollection: ProviderDataCollection?
+
+    enum CodingKeys: String, CodingKey {
+        case order
+        case allowFallbacks = "allow_fallbacks"
+        case dataCollection = "data_collection"
+    }
+
     /// Creates new provider preferences.
     ///
-    /// - Parameter order: Ordered list of provider names
-    public init(order: [String]) {
+    /// - Parameters:
+    ///   - order: Ordered list of provider names (may be empty if only other flags are set).
+    ///   - allowFallbacks: Whether to allow fallback providers.
+    ///   - dataCollection: Optional data collection policy for routing.
+    public init(
+        order: [String],
+        allowFallbacks: Bool? = nil,
+        dataCollection: ProviderDataCollection? = nil
+    ) {
         self.order = order
+        self.allowFallbacks = allowFallbacks
+        self.dataCollection = dataCollection
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.order = try container.decodeIfPresent([String].self, forKey: .order) ?? []
+        self.allowFallbacks = try container.decodeIfPresent(Bool.self, forKey: .allowFallbacks)
+        self.dataCollection = try container.decodeIfPresent(ProviderDataCollection.self, forKey: .dataCollection)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        if !order.isEmpty {
+            try container.encode(order, forKey: .order)
+        }
+        try container.encodeIfPresent(allowFallbacks, forKey: .allowFallbacks)
+        try container.encodeIfPresent(dataCollection, forKey: .dataCollection)
     }
 }

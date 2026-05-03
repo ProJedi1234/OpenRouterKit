@@ -13,26 +13,32 @@ import FoundationNetworking
 
 /// A client for interacting with the OpenRouter API.
 ///
-/// `OpenRouterClient` provides access to chat completions, model information,
+/// `OpenRouterClient` provides access to chat completions, embeddings, model information,
 /// and API key management through dedicated service objects.
 ///
 /// Example:
 /// ```swift
 /// let client = OpenRouterClient(apiKey: "your-api-key")
 /// let response = try await client.chat.send(request: chatRequest)
+/// let embeddings = try await client.embeddings.create(
+///     request: EmbeddingRequest(model: "openai/text-embedding-3-small", input: .string("Hello"))
+/// )
 /// ```
 public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
     package let httpClient: HTTPClient
-    
+
     /// Service for chat completion operations.
     public let chat: ChatServiceProtocol
-    
+
+    /// Service for embeddings operations.
+    public let embeddings: EmbeddingsServiceProtocol
+
     /// Service for model information operations.
     public let models: ModelsServiceProtocol
-    
+
     /// Service for API key management operations.
     public let keys: KeysServiceProtocol
-    
+
     /// Creates a new OpenRouter client with a custom HTTP client implementation.
     ///
     /// Used internally by `OpenRouterKitNIO` to inject the NIO-based HTTP client.
@@ -41,6 +47,7 @@ public final class OpenRouterClient: OpenRouterClientProtocol, Sendable {
     package init(httpClient: HTTPClient) {
         self.httpClient = httpClient
         self.chat = ChatService(httpClient: httpClient)
+        self.embeddings = EmbeddingsService(httpClient: httpClient)
         self.models = ModelsService(httpClient: httpClient)
         self.keys = KeysService(httpClient: httpClient)
     }

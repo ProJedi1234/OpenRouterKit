@@ -5,7 +5,6 @@
 //  Created by Aditya Dhar on 10/11/24.
 //
 
-
 import Testing
 import Foundation
 #if canImport(FoundationNetworking)
@@ -29,12 +28,12 @@ struct OpenRouterClientTests {
 
         client = OpenRouterClient(apiKey: apiKey, siteURL: "https://github.com", siteName: "Swift OpenRouterKit Tests", session: session)
     }
-    
+
     @Test func testChatRequest() async throws {
         let messages: [Message] = [
             .init(role: .user, content: .string("Tell me a joke"))
         ]
-        
+
         let request = OpenRouterRequest(messages: messages, model: "google/gemini-3-flash-preview")
         let response = try await client.chat.send(request: request)
 
@@ -57,7 +56,7 @@ struct OpenRouterClientTests {
         #expect(!firstModel.id.isEmpty, "Model id should not be empty")
         #expect(!firstModel.name.isEmpty, "Model name should not be empty")
     }
-    
+
     /// URLSession streaming only works on Darwin. On non-Darwin platforms, use OpenRouterKitNIO instead.
     @Test(.enabled(if: isDarwin))
     func testStreamChatRequest() async throws {
@@ -149,5 +148,29 @@ struct OpenRouterClientTests {
         #expect(usage.prompt_tokens > 0, "prompt_tokens should be > 0")
         #expect(usage.completion_tokens > 0, "completion_tokens should be > 0")
         print("Tool call usage: prompt=\(usage.prompt_tokens), completion=\(usage.completion_tokens), total=\(usage.total_tokens)")
+    }
+
+    @Test func testListEmbeddingModels() async throws {
+        let response = try await client.embeddings.listModels()
+        let first = try #require(response.data.first, "Embedding models list should not be empty")
+        #expect(!first.id.isEmpty, "Embedding model id should not be empty")
+    }
+
+    @Test func testCreateEmbedding() async throws {
+        let response = try await client.embeddings.create(
+            request: EmbeddingRequest(
+                model: "perplexity/pplx-embed-v1-0.6b",
+                input: .string("hello embeddings")
+            )
+        )
+        #expect(!response.model.isEmpty)
+        let first = try #require(response.data.first)
+        if case .floats(let vec) = first.embedding {
+            #expect(!vec.isEmpty, "Embedding vector should not be empty")
+        } else if case .base64(let base64) = first.embedding {
+            #expect(!base64.isEmpty, "Base64 embedding should not be empty")
+        } else {
+            Issue.record("Unexpected embedding format")
+        }
     }
 }

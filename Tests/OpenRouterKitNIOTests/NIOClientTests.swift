@@ -73,6 +73,8 @@ struct NIOClientTests {
             case .finished(let reason, _):
                 gotFinished = true
                 #expect(reason == "stop", "Finish reason should be 'stop'")
+            case .audio:
+                break
             case .toolCallDelta:
                 break
             }
@@ -88,6 +90,8 @@ struct NIOClientTests {
         let response = try await client.models.list(
             category: nil,
             supportedParameters: nil,
+            inputModalities: nil,
+            outputModalities: nil,
             useRSS: nil,
             useRSSChatLinks: nil
         )

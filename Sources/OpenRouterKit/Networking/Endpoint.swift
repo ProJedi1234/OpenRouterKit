@@ -10,9 +10,17 @@ import Foundation
 /// Represents an API endpoint for the OpenRouter service.
 package enum Endpoint {
     case chatCompletions(ChatRequest)
+    case createAudioTranscription(AudioTranscriptionRequest)
     case createEmbedding(EmbeddingRequest)
     case listEmbeddingModels
-    case listModels(category: String?, supportedParameters: String?, useRSS: String?, useRSSChatLinks: String?)
+    case listModels(
+        category: String?,
+        supportedParameters: String?,
+        inputModalities: String?,
+        outputModalities: String?,
+        useRSS: String?,
+        useRSSChatLinks: String?
+    )
     case listModelsForUser
     case listKeys(includeDisabled: Bool?, offset: String?)
     case createKey(CreateAPIKeyRequest)
@@ -24,7 +32,7 @@ package enum Endpoint {
     /// The HTTP method for this endpoint.
     var method: HTTPMethod {
         switch self {
-        case .chatCompletions, .createKey, .createEmbedding:
+        case .chatCompletions, .createAudioTranscription, .createKey, .createEmbedding:
             return .POST
         case .updateKey:
             return .PATCH
@@ -40,6 +48,8 @@ package enum Endpoint {
         switch self {
         case .chatCompletions:
             return "/chat/completions"
+        case .createAudioTranscription:
+            return "/audio/transcriptions"
         case .createEmbedding:
             return "/embeddings"
         case .listEmbeddingModels:
@@ -60,13 +70,19 @@ package enum Endpoint {
     /// Query items for this endpoint (if applicable).
     var queryItems: [URLQueryItem]? {
         switch self {
-        case .listModels(let category, let supportedParameters, let useRSS, let useRSSChatLinks):
+        case .listModels(let category, let supportedParameters, let inputModalities, let outputModalities, let useRSS, let useRSSChatLinks):
             var items: [URLQueryItem] = []
             if let category {
                 items.append(URLQueryItem(name: "category", value: category))
             }
             if let supportedParameters {
                 items.append(URLQueryItem(name: "supported_parameters", value: supportedParameters))
+            }
+            if let inputModalities {
+                items.append(URLQueryItem(name: "input_modalities", value: inputModalities))
+            }
+            if let outputModalities {
+                items.append(URLQueryItem(name: "output_modalities", value: outputModalities))
             }
             if let useRSS {
                 items.append(URLQueryItem(name: "use_rss", value: useRSS))
@@ -93,6 +109,8 @@ package enum Endpoint {
     var body: Encodable? {
         switch self {
         case .chatCompletions(let request):
+            return request
+        case .createAudioTranscription(let request):
             return request
         case .createEmbedding(let request):
             return request

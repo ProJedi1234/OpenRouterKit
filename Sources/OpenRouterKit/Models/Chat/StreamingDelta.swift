@@ -57,10 +57,14 @@ public struct StreamingDelta: Codable {
             /// Tool call deltas. During streaming, tool calls arrive incrementally.
             public var toolCalls: [ToolCallDelta]?
 
+            /// Audio delta for audio-output-capable models.
+            public var audio: AudioDelta?
+
             enum CodingKeys: String, CodingKey {
                 case role
                 case content
                 case toolCalls = "tool_calls"
+                case audio
             }
         }
     }

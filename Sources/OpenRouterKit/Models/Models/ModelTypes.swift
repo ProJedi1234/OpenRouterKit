@@ -196,6 +196,7 @@ public enum OutputModality: String, Codable, Sendable {
     case image
     case audio
     case embeddings
+    case transcription
 }
 
 /// Represents model architecture information.

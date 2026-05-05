@@ -15,6 +15,9 @@ public protocol OpenRouterClientProtocol: Sendable {
     /// Service for chat completions.
     var chat: ChatServiceProtocol { get }
 
+    /// Service for audio transcription operations.
+    var audio: AudioServiceProtocol { get }
+
     /// Service for embeddings.
     var embeddings: EmbeddingsServiceProtocol { get }
 
@@ -58,6 +61,16 @@ public protocol ChatServiceProtocol: Sendable {
     func streamEvents(request: ChatRequest) async throws -> AsyncThrowingStream<ChatStreamEvent, Error>
 }
 
+/// Protocol for audio operations.
+public protocol AudioServiceProtocol: Sendable {
+    /// Creates a speech-to-text transcription.
+    ///
+    /// - Parameter request: Audio transcription request with model and base64 input audio
+    /// - Returns: Decoded transcription response
+    /// - Throws: ``OpenRouterError`` if the request fails
+    func createTranscription(request: AudioTranscriptionRequest) async throws -> AudioTranscriptionResponse
+}
+
 /// Protocol for model listing operations.
 public protocol ModelsServiceProtocol: Sendable {
     /// Lists available models with optional filters.
@@ -65,6 +78,8 @@ public protocol ModelsServiceProtocol: Sendable {
     /// - Parameters:
     ///   - category: Optional category filter
     ///   - supportedParameters: Optional supported parameters filter
+    ///   - inputModalities: Optional input modality filter, such as `audio`
+    ///   - outputModalities: Optional output modality filter, such as `transcription`
     ///   - useRSS: Optional RSS filter
     ///   - useRSSChatLinks: Optional RSS chat links filter
     /// - Returns: List of available models
@@ -72,6 +87,8 @@ public protocol ModelsServiceProtocol: Sendable {
     func list(
         category: String?,
         supportedParameters: String?,
+        inputModalities: String?,
+        outputModalities: String?,
         useRSS: String?,
         useRSSChatLinks: String?
     ) async throws -> ModelsListResponse

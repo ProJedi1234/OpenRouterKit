@@ -21,11 +21,20 @@ final class ModelsService: ModelsServiceProtocol {
     func list(
         category: String?,
         supportedParameters: String?,
+        inputModalities: String?,
+        outputModalities: String?,
         useRSS: String?,
         useRSSChatLinks: String?
     ) async throws -> ModelsListResponse {
         try await httpClient.execute(
-            .listModels(category: category, supportedParameters: supportedParameters, useRSS: useRSS, useRSSChatLinks: useRSSChatLinks),
+            .listModels(
+                category: category,
+                supportedParameters: supportedParameters,
+                inputModalities: inputModalities,
+                outputModalities: outputModalities,
+                useRSS: useRSS,
+                useRSSChatLinks: useRSSChatLinks
+            ),
             expectedStatusCode: 200
         )
     }

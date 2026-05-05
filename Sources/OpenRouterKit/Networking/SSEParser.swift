@@ -58,6 +58,10 @@ package enum SSEParser {
                 }
             }
 
+            if let audio = choice.delta.audio, audio.data != nil || audio.transcript != nil {
+                events.append(.audio(audio))
+            }
+
             if let finishReason = choice.finish_reason {
                 events.append(.finished(finishReason: finishReason, usage: delta.usage))
             }

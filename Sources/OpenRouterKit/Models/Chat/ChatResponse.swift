@@ -44,10 +44,14 @@ public struct ChatResponse: Codable, Sendable {
             /// Present when the model decides to call one or more tools.
             public var toolCalls: [ToolCall]?
 
+            /// Generated audio payload, when returned by audio-capable models.
+            public var audio: ChatCompletionAudio?
+
             enum CodingKeys: String, CodingKey {
                 case role
                 case content
                 case toolCalls = "tool_calls"
+                case audio
             }
         }
     }

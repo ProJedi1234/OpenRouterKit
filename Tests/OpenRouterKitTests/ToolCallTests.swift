@@ -934,6 +934,8 @@ struct ToolCallIntegrationTests {
             case .toolCallDelta(let delta):
                 receivedToolCallDelta = true
                 accumulator.accumulate(delta)
+            case .audio:
+                break
             case .finished(let reason, _):
                 finishReason = reason
             }
@@ -992,6 +994,8 @@ struct ToolCallIntegrationTests {
                 break
             case .toolCallDelta(let delta):
                 accumulator.accumulate(delta)
+            case .audio:
+                break
             case .finished(let reason, _):
                 finishReason = reason
             }

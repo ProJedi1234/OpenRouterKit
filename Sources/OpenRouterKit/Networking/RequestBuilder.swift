@@ -33,31 +33,31 @@ package struct RequestBuilder: Sendable {
     package func build(_ endpoint: Endpoint) throws -> URLRequest {
         var components = URLComponents(string: "\(baseURL)\(endpoint.path)")
         components?.queryItems = endpoint.queryItems
-        
+
         guard let url = components?.url else {
             throw URLError(.badURL)
         }
-        
+
         var request = URLRequest(url: url)
         request.httpMethod = endpoint.method.rawValue
-        
+
         // Set common headers
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        
+
         if let siteURL = siteURL {
             request.addValue(siteURL, forHTTPHeaderField: "HTTP-Referer")
         }
-        
+
         if let siteName = siteName {
             request.addValue(siteName, forHTTPHeaderField: "X-Title")
         }
-        
+
         // Set body if present
         if let body = endpoint.body {
             request.addValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try JSONEncoder().encode(body)
         }
-        
+
         return request
     }
 }

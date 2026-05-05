@@ -97,7 +97,13 @@ public enum StringOrContentPart: Codable, Sendable {
         } else if let contentPartsValue = try? container.decode([ContentPart].self) {
             self = .contentParts(contentPartsValue)
         } else {
-            throw DecodingError.typeMismatch(StringOrContentPart.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Failed to decode StringOrContentPart"))
+            throw DecodingError.typeMismatch(
+                StringOrContentPart.self,
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Failed to decode StringOrContentPart"
+                )
+            )
         }
     }
 

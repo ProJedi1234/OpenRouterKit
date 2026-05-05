@@ -75,23 +75,10 @@ public protocol AudioServiceProtocol: Sendable {
 public protocol ModelsServiceProtocol: Sendable {
     /// Lists available models with optional filters.
     ///
-    /// - Parameters:
-    ///   - category: Optional category filter
-    ///   - supportedParameters: Optional supported parameters filter
-    ///   - inputModalities: Optional input modality filter, such as `audio`
-    ///   - outputModalities: Optional output modality filter, such as `transcription`
-    ///   - useRSS: Optional RSS filter
-    ///   - useRSSChatLinks: Optional RSS chat links filter
+    /// - Parameter filters: Optional query filters for the models endpoint
     /// - Returns: List of available models
     /// - Throws: OpenRouterError if the request fails
-    func list(
-        category: String?,
-        supportedParameters: String?,
-        inputModalities: String?,
-        outputModalities: String?,
-        useRSS: String?,
-        useRSSChatLinks: String?
-    ) async throws -> ModelsListResponse
+    func list(filters: ModelsListFilters) async throws -> ModelsListResponse
 
     /// Lists models available to the current user.
     ///

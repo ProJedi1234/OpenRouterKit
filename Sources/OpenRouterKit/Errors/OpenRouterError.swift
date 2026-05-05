@@ -24,13 +24,13 @@ package struct ErrorResponse: Decodable {
 public struct OpenRouterError: Error {
     /// The type of error that occurred
     public let type: ErrorType
-    
+
     /// Human-readable error message
     public let message: String
-    
+
     /// Optional metadata associated with the error
     public let metadata: [String: String]?
-    
+
     /// Enumeration of error types that can occur
     public enum ErrorType: Sendable {
         /// Bad request (400)
@@ -65,7 +65,9 @@ public struct OpenRouterError: Error {
     /// Creates a streaming-unavailable error for non-Darwin platforms.
     static let streamingUnavailable = OpenRouterError(
         type: .streamingUnavailable,
-        message: "Streaming requires Darwin (macOS/iOS) or OpenRouterKitNIO. Import OpenRouterKitNIO and use OpenRouterClient.nio(apiKey:) for cross-platform streaming.",
+        message: "Streaming requires Darwin (macOS/iOS) or OpenRouterKitNIO. "
+            + "Import OpenRouterKitNIO and use OpenRouterClient.nio(apiKey:) "
+            + "for cross-platform streaming.",
         metadata: nil
     )
 

@@ -99,7 +99,7 @@ final class NIOHTTPClient: OpenRouterKit.HTTPClient, @unchecked Sendable {
                         for byte in bytes {
                             lineBuffer.append(byte)
                             if byte == UInt8(ascii: "\n") {
-                                let line = String(decoding: lineBuffer, as: UTF8.self)
+                                let line = String(bytes: lineBuffer, encoding: .utf8) ?? ""
                                 for value in transform(line) {
                                     continuation.yield(value)
                                 }

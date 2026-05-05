@@ -10,14 +10,14 @@ import Foundation
 /// Service for chat completion operations.
 final class ChatService: ChatServiceProtocol {
     private let httpClient: HTTPClient
-    
+
     /// Creates a new chat service.
     ///
     /// - Parameter httpClient: The HTTP client to use for requests
     init(httpClient: HTTPClient) {
         self.httpClient = httpClient
     }
-    
+
     func send(request: ChatRequest) async throws -> ChatResponse {
         try await httpClient.execute(.chatCompletions(request), expectedStatusCode: 200)
     }

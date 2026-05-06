@@ -52,21 +52,19 @@ public struct ModelsListFilters: Sendable {
 }
 
 extension ModelsServiceProtocol {
-    /*
-     Lists available models with optional filters.
-
-     For full filter control, prefer ``list(filters:)`` with ``ModelsListFilters``.
-
-     - Parameters:
-       - category: Optional category filter
-       - supportedParameters: Optional supported parameters filter
-       - inputModalities: Optional input modality filter, such as `audio`
-       - outputModalities: Optional output modality filter, such as `transcription`
-       - useRSS: Optional RSS filter
-       - useRSSChatLinks: Optional RSS chat links filter
-     - Returns: List of available models
-     - Throws: ``OpenRouterError`` if the request fails
-     */
+    /// Lists available models with optional filters.
+    ///
+    /// For full filter control, prefer ``list(filters:)`` with ``ModelsListFilters``.
+    ///
+    /// - Parameters:
+    ///   - category: Optional category filter
+    ///   - supportedParameters: Optional supported parameters filter
+    ///   - inputModalities: Optional input modality filter, such as `audio`
+    ///   - outputModalities: Optional output modality filter, such as `transcription`
+    ///   - useRSS: Optional RSS filter
+    ///   - useRSSChatLinks: Optional RSS chat links filter
+    /// - Returns: List of available models
+    /// - Throws: ``OpenRouterError`` if the request fails
     // swiftlint:disable function_parameter_count
     public func list(
         category: String?,

@@ -275,6 +275,8 @@ for try await event in events {
         print(text, terminator: "")
     case .toolCallDelta(let delta):
         accumulator.accumulate(delta)
+    case .audio:
+        break
     case .finished(let reason, _):
         if reason == "tool_calls" {
             let toolCalls = accumulator.toolCalls
@@ -445,6 +447,8 @@ do {
         // try a different model (502)
     case .noAvailableProvider:
         // model might be overloaded (503)
+    case .streamingUnavailable:
+        // streaming not supported on this platform; use OpenRouterKitNIO
     case .unknownError(let code):
         print("Unexpected error (\(code)): \(error.message)")
     }

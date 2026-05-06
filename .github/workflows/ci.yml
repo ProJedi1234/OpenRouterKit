@@ -33,6 +33,8 @@ jobs:
       - name: Print Swift version
         run: swift --version
       - name: Run tests
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: swift test --parallel
 
   test-latest:
@@ -46,4 +48,6 @@ jobs:
       - name: Print Swift version
         run: swift --version
       - name: Run tests
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: swift test --parallel

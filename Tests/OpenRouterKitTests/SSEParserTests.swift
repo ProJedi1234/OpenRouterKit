@@ -89,13 +89,51 @@ struct SSEParserTests {
     }
 
     @Test func testProcessLineAsEventsWithToolCallDelta() {
-        let line = "data: {\"id\":\"gen-123\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_abc\",\"type\":\"function\",\"function\":{\"name\":\"get_weather\",\"arguments\":\"\"}}]},\"finish_reason\":null}]}\n"
+        let line = "data: {\"id\":\"gen-123\",\"choices\":[{\"index\":0,\"delta\":{\"tool_calls\":["
+            + "{\"index\":0,\"id\":\"call_abc\",\"type\":\"function\",\"function\":"
+            + "{\"name\":\"get_weather\",\"arguments\":\"\"}}]},\"finish_reason\":null}]}\n"
         let events = SSEParser.processLineAsEvents(line)
         #expect(events.count == 1)
         if case .toolCallDelta(let delta) = events.first {
             #expect(delta.function?.name == "get_weather")
         } else {
             Issue.record("Expected .toolCallDelta event")
+        }
+    }
+
+    @Test func testProcessLineAsEventsWithAudioDelta() {
+        let line = "data: {\"id\":\"gen-123\",\"choices\":[{\"index\":0,\"delta\":{\"audio\":"
+            + "{\"data\":\"UklGRg==\",\"transcript\":\"Hello\"}},\"finish_reason\":null}]}\n"
+        let events = SSEParser.processLineAsEvents(line)
+        #expect(events.count == 1)
+        if case .audio(let audio) = events.first {
+            #expect(audio.data == "UklGRg==")
+            #expect(audio.transcript == "Hello")
+        } else {
+            Issue.record("Expected .audio event")
+        }
+    }
+
+    @Test func testProcessLineAsEventsWithTextAudioAndFinish() {
+        let line = "data: {\"id\":\"gen-123\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hi\","
+            + "\"audio\":{\"data\":\"YQ==\"}},\"finish_reason\":\"stop\"}]}\n"
+        let events = SSEParser.processLineAsEvents(line)
+        #expect(events.count == 3)
+        if case .text(let content) = events[0] {
+            #expect(content == "Hi")
+        } else {
+            Issue.record("Expected .text event first")
+        }
+        if case .audio(let audio) = events[1] {
+            #expect(audio.data == "YQ==")
+            #expect(audio.transcript == nil)
+        } else {
+            Issue.record("Expected .audio event second")
+        }
+        if case .finished(let reason, _) = events[2] {
+            #expect(reason == "stop")
+        } else {
+            Issue.record("Expected .finished event third")
         }
     }
 
@@ -142,7 +180,8 @@ struct SSEParserTests {
     }
 
     @Test func testProcessLineAsEventsWithFinishReasonAndUsage() {
-        let line = "data: {\"id\":\"gen-123\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":15,\"total_tokens\":20}}\n"
+        let line = "data: {\"id\":\"gen-123\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],"
+            + "\"usage\":{\"prompt_tokens\":5,\"completion_tokens\":15,\"total_tokens\":20}}\n"
         let events = SSEParser.processLineAsEvents(line)
         #expect(events.count == 1)
         if case .finished(let reason, let usage) = events.first {

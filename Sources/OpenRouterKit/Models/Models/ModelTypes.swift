@@ -13,46 +13,128 @@ public struct ModelsListResponse: Codable, Sendable {
     public let data: [Model]
 }
 
+/// Optional query filters for ``ModelsServiceProtocol/list(filters:)``.
+public struct ModelsListFilters: Sendable {
+    /// Optional category filter.
+    public var category: String?
+
+    /// Optional supported-parameters filter.
+    public var supportedParameters: String?
+
+    /// Optional input modality filter, e.g. `[.audio]`.
+    ///
+    /// Sent to the API as a comma-separated list of raw values.
+    public var inputModalities: [InputModality]?
+
+    /// Optional output modality filter, e.g. `[.transcription]`.
+    ///
+    /// Sent to the API as a comma-separated list of raw values.
+    public var outputModalities: [OutputModality]?
+
+    /// Optional RSS filter.
+    public var useRSS: String?
+
+    /// Optional RSS chat-links filter.
+    public var useRSSChatLinks: String?
+
+    /// Creates model list filters.
+    public init(
+        category: String? = nil,
+        supportedParameters: String? = nil,
+        inputModalities: [InputModality]? = nil,
+        outputModalities: [OutputModality]? = nil,
+        useRSS: String? = nil,
+        useRSSChatLinks: String? = nil
+    ) {
+        self.category = category
+        self.supportedParameters = supportedParameters
+        self.inputModalities = inputModalities
+        self.outputModalities = outputModalities
+        self.useRSS = useRSS
+        self.useRSSChatLinks = useRSSChatLinks
+    }
+}
+
+// swiftlint:disable function_parameter_count
+extension ModelsServiceProtocol {
+    /// Lists available models with optional filters.
+    ///
+    /// - Parameters:
+    ///   - category: Optional category filter
+    ///   - supportedParameters: Optional supported parameters filter
+    ///   - inputModalities: Comma-separated input modality string, such as `"audio"`
+    ///   - outputModalities: Comma-separated output modality string, such as `"transcription"`
+    ///   - useRSS: Optional RSS filter
+    ///   - useRSSChatLinks: Optional RSS chat links filter
+    /// - Returns: List of available models
+    /// - Throws: ``OpenRouterError`` if the request fails
+    @available(*, deprecated, message: "Use list(filters:) with ModelsListFilters instead")
+    public func list(
+        category: String?,
+        supportedParameters: String?,
+        inputModalities: String?,
+        outputModalities: String?,
+        useRSS: String?,
+        useRSSChatLinks: String?
+    ) async throws -> ModelsListResponse {
+        let parsedInput = inputModalities?
+            .split(separator: ",")
+            .compactMap { InputModality(rawValue: $0.trimmingCharacters(in: .whitespaces)) }
+        let parsedOutput = outputModalities?
+            .split(separator: ",")
+            .compactMap { OutputModality(rawValue: $0.trimmingCharacters(in: .whitespaces)) }
+        return try await list(filters: ModelsListFilters(
+            category: category,
+            supportedParameters: supportedParameters,
+            inputModalities: (parsedInput?.isEmpty ?? true) ? nil : parsedInput,
+            outputModalities: (parsedOutput?.isEmpty ?? true) ? nil : parsedOutput,
+            useRSS: useRSS,
+            useRSSChatLinks: useRSSChatLinks
+        ))
+    }
+}
+// swiftlint:enable function_parameter_count
+
 /// Represents a model available on OpenRouter.
 ///
 /// Contains information about the model including pricing, capabilities, and architecture.
 public struct Model: Codable, Sendable {
     /// Unique identifier for the model.
     public let id: String
-    
+
     /// Canonical slug for the model.
     public let canonicalSlug: String
-    
+
     /// Hugging Face identifier (if applicable).
     public let huggingFaceId: String?
-    
+
     /// Display name of the model.
     public let name: String
-    
+
     /// Creation timestamp.
     public let created: Double
-    
+
     /// Description of the model.
     public let description: String?
-    
+
     /// Pricing information.
     public let pricing: PublicPricing
-    
+
     /// Maximum context length.
     public let contextLength: Double?
-    
+
     /// Model architecture information.
     public let architecture: ModelArchitecture
-    
+
     /// Top provider information.
     public let topProvider: TopProviderInfo
-    
+
     /// Per-request limits.
     public let perRequestLimits: PerRequestLimits?
-    
+
     /// Supported parameters.
     public let supportedParameters: [Parameter]
-    
+
     /// Default parameters.
     public let defaultParameters: DefaultParameters?
 
@@ -77,40 +159,40 @@ public struct Model: Codable, Sendable {
 public struct PublicPricing: Codable, Sendable {
     /// Price per prompt token.
     public let prompt: String
-    
+
     /// Price per completion token.
     public let completion: String
-    
+
     /// Price per request (if applicable).
     public let request: String?
-    
+
     /// Price per image (if applicable).
     public let image: String?
-    
+
     /// Price per image token (if applicable).
     public let imageToken: String?
-    
+
     /// Price per image output (if applicable).
     public let imageOutput: String?
-    
+
     /// Price per audio (if applicable).
     public let audio: String?
-    
+
     /// Price for input audio cache (if applicable).
     public let inputAudioCache: String?
-    
+
     /// Price for web search (if applicable).
     public let webSearch: String?
-    
+
     /// Price for internal reasoning (if applicable).
     public let internalReasoning: String?
-    
+
     /// Price for input cache read (if applicable).
     public let inputCacheRead: String?
-    
+
     /// Price for input cache write (if applicable).
     public let inputCacheWrite: String?
-    
+
     /// Discount percentage (if applicable).
     public let discount: Double?
 
@@ -196,22 +278,23 @@ public enum OutputModality: String, Codable, Sendable {
     case image
     case audio
     case embeddings
+    case transcription
 }
 
 /// Represents model architecture information.
 public struct ModelArchitecture: Codable, Sendable {
     /// Tokenizer group.
     public let tokenizer: ModelGroup?
-    
+
     /// Instruction type.
     public let instructType: ModelArchitectureInstructType?
-    
+
     /// Modality string.
     public let modality: String?
-    
+
     /// Supported input modalities.
     public let inputModalities: [InputModality]
-    
+
     /// Supported output modalities.
     public let outputModalities: [OutputModality]
 
@@ -228,10 +311,10 @@ public struct ModelArchitecture: Codable, Sendable {
 public struct TopProviderInfo: Codable, Sendable {
     /// Maximum context length.
     public let contextLength: Double?
-    
+
     /// Maximum completion tokens.
     public let maxCompletionTokens: Double?
-    
+
     /// Whether the provider is moderated.
     public let isModerated: Bool
 
@@ -246,7 +329,7 @@ public struct TopProviderInfo: Codable, Sendable {
 public struct PerRequestLimits: Codable, Sendable {
     /// Maximum prompt tokens.
     public let promptTokens: Double
-    
+
     /// Maximum completion tokens.
     public let completionTokens: Double
 
@@ -289,10 +372,10 @@ public enum Parameter: String, Codable, Sendable {
 public struct DefaultParameters: Codable, Sendable {
     /// Default temperature.
     public let temperature: Double?
-    
+
     /// Default top-p value.
     public let topP: Double?
-    
+
     /// Default frequency penalty.
     public let frequencyPenalty: Double?
 

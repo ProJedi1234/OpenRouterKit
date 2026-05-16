@@ -41,7 +41,7 @@ package protocol HTTPClient: Sendable {
 final class URLSessionHTTPClient: HTTPClient {
     private let session: URLSession
     private let requestBuilder: RequestBuilder
-    
+
     /// Creates a new URLSessionHTTPClient.
     ///
     /// - Parameters:
@@ -51,21 +51,21 @@ final class URLSessionHTTPClient: HTTPClient {
         self.session = session
         self.requestBuilder = requestBuilder
     }
-    
+
     func execute<T: Decodable>(_ endpoint: Endpoint, expectedStatusCode: Int) async throws -> T {
         let request = try requestBuilder.build(endpoint)
         let (data, response) = try await session.data(for: request)
-        
+
         guard let httpResponse = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
-        
+
         // Handle error status codes
         if httpResponse.statusCode != expectedStatusCode {
             let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
             throw OpenRouterError(httpStatusCode: httpResponse.statusCode, errorResponse: errorResponse)
         }
-        
+
         // Decode successful response
         do {
             return try JSONDecoder().decode(T.self, from: data)
@@ -124,7 +124,7 @@ final class URLSessionHTTPClient: HTTPClient {
                     for try await byte in bytes {
                         buffer.append(byte)
                         if byte == UInt8(ascii: "\n") {
-                            let line = String(decoding: buffer, as: UTF8.self)
+                            let line = String(bytes: buffer, encoding: .utf8) ?? ""
                             for value in transform(line) {
                                 continuation.yield(value)
                             }

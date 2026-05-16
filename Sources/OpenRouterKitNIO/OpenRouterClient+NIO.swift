@@ -7,12 +7,10 @@
 //
 
 import Foundation
-import OpenRouterKit
 import AsyncHTTPClient
 
 /// Re-export OpenRouterKit so users only need to import OpenRouterKitNIO.
 @_exported import OpenRouterKit
-
 extension OpenRouterClient {
     /// Creates a new OpenRouter client backed by AsyncHTTPClient (SwiftNIO).
     ///

@@ -31,7 +31,8 @@ let package = Package(
             ]),
         .testTarget(
             name: "OpenRouterKitTests",
-            dependencies: ["OpenRouterKit"]
+            dependencies: ["OpenRouterKit"],
+            resources: [.copy("Resources")]
         ),
         .testTarget(
             name: "OpenRouterKitNIOTests",

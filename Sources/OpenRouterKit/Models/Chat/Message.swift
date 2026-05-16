@@ -97,7 +97,13 @@ public enum StringOrContentPart: Codable, Sendable {
         } else if let contentPartsValue = try? container.decode([ContentPart].self) {
             self = .contentParts(contentPartsValue)
         } else {
-            throw DecodingError.typeMismatch(StringOrContentPart.self, DecodingError.Context(codingPath: decoder.codingPath, debugDescription: "Failed to decode StringOrContentPart"))
+            throw DecodingError.typeMismatch(
+                StringOrContentPart.self,
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Failed to decode StringOrContentPart"
+                )
+            )
         }
     }
 
@@ -112,12 +118,14 @@ public enum StringOrContentPart: Codable, Sendable {
     }
 }
 
-/// Represents the content of a message, which can be either text or an image.
+/// Represents the content of a message, which can be text, an image, or audio.
 public enum ContentPart: Codable, Sendable {
     /// Text content
     case text(TextContent)
     /// Image content
     case image(ImageContentPart)
+    /// Base64-encoded audio input
+    case inputAudio(InputAudioContentPart)
 
     enum CodingKeys: String, CodingKey {
         case type
@@ -134,6 +142,9 @@ public enum ContentPart: Codable, Sendable {
         case "image_url":
             let imageContent = try ImageContentPart(from: decoder)
             self = .image(imageContent)
+        case "input_audio":
+            let audioContent = try InputAudioContentPart(from: decoder)
+            self = .inputAudio(audioContent)
         default:
             throw DecodingError.dataCorruptedError(forKey: .type, in: container,
                 debugDescription: "Invalid type: \(type)")
@@ -149,6 +160,9 @@ public enum ContentPart: Codable, Sendable {
         case .image(let imageContent):
             try container.encode("image_url", forKey: .type)
             try imageContent.encode(to: encoder)
+        case .inputAudio(let audioContent):
+            try container.encode("input_audio", forKey: .type)
+            try audioContent.encode(to: encoder)
         }
     }
 }

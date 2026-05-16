@@ -10,7 +10,7 @@ import Foundation
 /// An event emitted during a streaming chat completion.
 ///
 /// Use with `ChatServiceProtocol.streamEvents(request:)` to receive
-/// text chunks, tool call deltas, and finish signals from a single stream.
+/// text chunks, audio deltas, tool call deltas, and finish signals from a single stream.
 ///
 /// Example:
 /// ```swift
@@ -19,6 +19,8 @@ import Foundation
 ///     switch event {
 ///     case .text(let text):
 ///         print(text, terminator: "")
+///     case .audio(let audio):
+///         print(audio.transcript ?? "", terminator: "")
 ///     case .toolCallDelta(let delta):
 ///         accumulator.accumulate(delta)
 ///     case .finished(let reason, let usage):
@@ -31,6 +33,9 @@ import Foundation
 public enum ChatStreamEvent: Sendable {
     /// A chunk of text content from the model.
     case text(String)
+
+    /// A chunk of generated audio and/or transcript text from the model.
+    case audio(AudioDelta)
 
     /// An incremental tool call delta. Accumulate these with ``ToolCallAccumulator``
     /// to reassemble complete ``ToolCall`` objects.

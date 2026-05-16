@@ -73,6 +73,8 @@ struct NIOClientTests {
             case .finished(let reason, _):
                 gotFinished = true
                 #expect(reason == "stop", "Finish reason should be 'stop'")
+            case .audio:
+                break
             case .toolCallDelta:
                 break
             }
@@ -85,12 +87,7 @@ struct NIOClientTests {
     }
 
     @Test func testNIOListModels() async throws {
-        let response = try await client.models.list(
-            category: nil,
-            supportedParameters: nil,
-            useRSS: nil,
-            useRSSChatLinks: nil
-        )
+        let response = try await client.models.list(filters: ModelsListFilters())
 
         let firstModel = try #require(response.data.first, "Models list should not be empty")
         #expect(!firstModel.id.isEmpty, "Model id should not be empty")

@@ -88,12 +88,19 @@ public struct ChatRequest: Codable, Sendable {
     /// Reasoning configuration for advanced reasoning capabilities.
     public var reasoning: ReasoningConfiguration?
 
+    /// Requested response modalities, such as `["text", "audio"]`.
+    public var modalities: [ChatResponseModality]?
+
+    /// Audio generation options used when requesting audio output.
+    public var audio: ChatAudioConfiguration?
+
     enum CodingKeys: String, CodingKey {
         case messages, prompt, model, responseFormat = "response_format", stop, stream,
              maxTokens = "max_tokens", temperature, topP = "top_p", topK = "top_k",
              frequencyPenalty = "frequency_penalty", presencePenalty = "presence_penalty",
              repetitionPenalty = "repetition_penalty", seed, tools, toolChoice = "tool_choice",
-             logitBias = "logit_bias", transforms, models, route, provider, reasoning
+             logitBias = "logit_bias", transforms, models, route, provider, reasoning,
+             modalities, audio
     }
 
     /// Creates a new chat request.
@@ -121,6 +128,8 @@ public struct ChatRequest: Codable, Sendable {
     ///   - route: Route option
     ///   - provider: Provider preferences
     ///   - reasoning: Reasoning configuration
+    ///   - modalities: Requested response modalities
+    ///   - audio: Audio generation configuration
     public init(
         messages: [Message]? = nil,
         prompt: String? = nil,
@@ -143,7 +152,9 @@ public struct ChatRequest: Codable, Sendable {
         models: [String]? = nil,
         route: String? = nil,
         provider: ProviderPreferences? = nil,
-        reasoning: ReasoningConfiguration? = nil
+        reasoning: ReasoningConfiguration? = nil,
+        modalities: [ChatResponseModality]? = nil,
+        audio: ChatAudioConfiguration? = nil
     ) {
         self.messages = messages
         self.prompt = prompt
@@ -167,6 +178,8 @@ public struct ChatRequest: Codable, Sendable {
         self.route = route
         self.provider = provider
         self.reasoning = reasoning
+        self.modalities = modalities
+        self.audio = audio
     }
 }
 

@@ -100,12 +100,14 @@ struct ToolCallIntegrationTests {
                 toolCalls: toolCalls
             ))
 
-            // Add the tool result
-            conversationMessages.append(Message(
-                role: .tool,
-                content: .string("{\"temperature\": 65, \"condition\": \"foggy\", \"humidity\": 80}"),
-                toolCallId: toolCall.id
-            ))
+            // Add one tool result per tool call ID (APIs require a matching tool message per id).
+            for tc in toolCalls {
+                conversationMessages.append(Message(
+                    role: .tool,
+                    content: .string("{\"temperature\": 65, \"condition\": \"foggy\", \"humidity\": 80}"),
+                    toolCallId: tc.id
+                ))
+            }
 
             let followUpRequest = ChatRequest(
                 messages: conversationMessages,

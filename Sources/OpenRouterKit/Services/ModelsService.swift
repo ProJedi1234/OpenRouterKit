@@ -23,13 +23,17 @@ final class ModelsService: ModelsServiceProtocol {
             .listModels(
                 category: filters.category,
                 supportedParameters: filters.supportedParameters,
-                inputModalities: filters.inputModalities,
-                outputModalities: filters.outputModalities,
+                inputModalities: filters.inputModalities.flatMap(Self.joinRawValues),
+                outputModalities: filters.outputModalities.flatMap(Self.joinRawValues),
                 useRSS: filters.useRSS,
                 useRSSChatLinks: filters.useRSSChatLinks
             ),
             expectedStatusCode: 200
         )
+    }
+
+    private static func joinRawValues<T: RawRepresentable>(_ values: [T]) -> String? where T.RawValue == String {
+        values.isEmpty ? nil : values.map(\.rawValue).joined(separator: ",")
     }
 
     func listForUser() async throws -> ModelsListResponse {

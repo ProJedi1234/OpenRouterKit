@@ -21,11 +21,15 @@ public struct ModelsListFilters: Sendable {
     /// Optional supported-parameters filter.
     public var supportedParameters: String?
 
-    /// Optional input modality filter, such as `audio`.
-    public var inputModalities: String?
+    /// Optional input modality filter, e.g. `[.audio]`.
+    ///
+    /// Sent to the API as a comma-separated list of raw values.
+    public var inputModalities: [InputModality]?
 
-    /// Optional output modality filter, such as `transcription`.
-    public var outputModalities: String?
+    /// Optional output modality filter, e.g. `[.transcription]`.
+    ///
+    /// Sent to the API as a comma-separated list of raw values.
+    public var outputModalities: [OutputModality]?
 
     /// Optional RSS filter.
     public var useRSS: String?
@@ -37,8 +41,8 @@ public struct ModelsListFilters: Sendable {
     public init(
         category: String? = nil,
         supportedParameters: String? = nil,
-        inputModalities: String? = nil,
-        outputModalities: String? = nil,
+        inputModalities: [InputModality]? = nil,
+        outputModalities: [OutputModality]? = nil,
         useRSS: String? = nil,
         useRSSChatLinks: String? = nil
     ) {
@@ -51,21 +55,20 @@ public struct ModelsListFilters: Sendable {
     }
 }
 
+// swiftlint:disable function_parameter_count
 extension ModelsServiceProtocol {
     /// Lists available models with optional filters.
-    ///
-    /// For full filter control, prefer ``list(filters:)`` with ``ModelsListFilters``.
     ///
     /// - Parameters:
     ///   - category: Optional category filter
     ///   - supportedParameters: Optional supported parameters filter
-    ///   - inputModalities: Optional input modality filter, such as `audio`
-    ///   - outputModalities: Optional output modality filter, such as `transcription`
+    ///   - inputModalities: Comma-separated input modality string, such as `"audio"`
+    ///   - outputModalities: Comma-separated output modality string, such as `"transcription"`
     ///   - useRSS: Optional RSS filter
     ///   - useRSSChatLinks: Optional RSS chat links filter
     /// - Returns: List of available models
     /// - Throws: ``OpenRouterError`` if the request fails
-    // swiftlint:disable function_parameter_count
+    @available(*, deprecated, message: "Use list(filters:) with ModelsListFilters instead")
     public func list(
         category: String?,
         supportedParameters: String?,
@@ -74,17 +77,23 @@ extension ModelsServiceProtocol {
         useRSS: String?,
         useRSSChatLinks: String?
     ) async throws -> ModelsListResponse {
-        try await list(filters: ModelsListFilters(
+        let parsedInput = inputModalities?
+            .split(separator: ",")
+            .compactMap { InputModality(rawValue: $0.trimmingCharacters(in: .whitespaces)) }
+        let parsedOutput = outputModalities?
+            .split(separator: ",")
+            .compactMap { OutputModality(rawValue: $0.trimmingCharacters(in: .whitespaces)) }
+        return try await list(filters: ModelsListFilters(
             category: category,
             supportedParameters: supportedParameters,
-            inputModalities: inputModalities,
-            outputModalities: outputModalities,
+            inputModalities: (parsedInput?.isEmpty ?? true) ? nil : parsedInput,
+            outputModalities: (parsedOutput?.isEmpty ?? true) ? nil : parsedOutput,
             useRSS: useRSS,
             useRSSChatLinks: useRSSChatLinks
         ))
     }
-    // swiftlint:enable function_parameter_count
 }
+// swiftlint:enable function_parameter_count
 
 /// Represents a model available on OpenRouter.
 ///

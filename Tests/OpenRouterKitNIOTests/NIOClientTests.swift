@@ -87,14 +87,7 @@ struct NIOClientTests {
     }
 
     @Test func testNIOListModels() async throws {
-        let response = try await client.models.list(
-            category: nil,
-            supportedParameters: nil,
-            inputModalities: nil,
-            outputModalities: nil,
-            useRSS: nil,
-            useRSSChatLinks: nil
-        )
+        let response = try await client.models.list(filters: ModelsListFilters())
 
         let firstModel = try #require(response.data.first, "Models list should not be empty")
         #expect(!firstModel.id.isEmpty, "Model id should not be empty")

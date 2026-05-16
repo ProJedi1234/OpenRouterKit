@@ -65,12 +65,7 @@ struct AudioIntegrationTests {
 
     @Test func listTranscriptionModelsReturnsResults() async throws {
         let response = try await client.models.list(
-            category: nil,
-            supportedParameters: nil,
-            inputModalities: nil,
-            outputModalities: "transcription",
-            useRSS: nil,
-            useRSSChatLinks: nil
+            filters: ModelsListFilters(outputModalities: [.transcription])
         )
         #expect(!response.data.isEmpty, "Expected at least one STT model from models API")
     }

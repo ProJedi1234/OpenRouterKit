@@ -122,21 +122,11 @@ Discover audio-capable models with modality filters:
 
 ```swift
 let audioInputModels = try await client.models.list(
-    category: nil,
-    supportedParameters: nil,
-    inputModalities: "audio",
-    outputModalities: nil,
-    useRSS: nil,
-    useRSSChatLinks: nil
+    filters: ModelsListFilters(inputModalities: [.audio])
 )
 
 let transcriptionModels = try await client.models.list(
-    category: nil,
-    supportedParameters: nil,
-    inputModalities: nil,
-    outputModalities: "transcription",
-    useRSS: nil,
-    useRSSChatLinks: nil
+    filters: ModelsListFilters(outputModalities: [.transcription])
 )
 ```
 
@@ -366,12 +356,7 @@ Browse available models, check pricing, and filter by capabilities:
 
 ```swift
 // List all models
-let allModels = try await client.models.list(
-    category: nil,
-    supportedParameters: nil,
-    useRSS: nil,
-    useRSSChatLinks: nil
-)
+let allModels = try await client.models.list(filters: ModelsListFilters())
 
 for model in allModels.data {
     print("\(model.name) — \(model.pricing.prompt) per token")
@@ -379,12 +364,7 @@ for model in allModels.data {
 
 // List STT models
 let sttModels = try await client.models.list(
-    category: nil,
-    supportedParameters: nil,
-    inputModalities: nil,
-    outputModalities: "transcription",
-    useRSS: nil,
-    useRSSChatLinks: nil
+    filters: ModelsListFilters(outputModalities: [.transcription])
 )
 
 // List models available to the current user
@@ -454,6 +434,25 @@ do {
     }
 }
 ```
+
+## Migration Notes
+
+### Custom Protocol Conformers
+
+If you conform to client protocols yourself (tests, mocks, or alternate implementations), update stubs for these requirements:
+
+- **`OpenRouterClientProtocol`** now requires `var audio: AudioServiceProtocol { get }`.
+- **`ModelsServiceProtocol`** now requires `func list(filters: ModelsListFilters) async throws -> ModelsListResponse`.
+
+The older parameter-based `list(category:supportedParameters:inputModalities:outputModalities:useRSS:useRSSChatLinks:)` overload is deprecated. Prefer `ModelsListFilters` and the single `list(filters:)` entry point—for example, filtering by input modality:
+
+```swift
+let response = try await client.models.list(
+    filters: ModelsListFilters(inputModalities: [.audio])
+)
+```
+
+Apps using the built-in `OpenRouterClient` do not need a migration; only custom protocol conformers must add or forward the new members.
 
 ## Links
 

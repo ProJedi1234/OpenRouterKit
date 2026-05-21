@@ -6,9 +6,9 @@ filter-by-commitish: true
 prerelease: true
 
 categories:
-  - title: 'New Features'
+  - title: 'Enhancements'
     labels:
-      - 'feature'
+      - 'enhancement'
   - title: 'Bug Fixes'
     labels:
       - 'bug'
@@ -31,7 +31,7 @@ version-resolver:
       - 'major'
   minor:
     labels:
-      - 'feature'
+      - 'enhancement'
   patch:
     labels:
       - 'bug'
@@ -56,9 +56,12 @@ template: |
   $CONTRIBUTORS
 
 autolabeler:
-  - label: 'feature'
+  - label: 'major'
     title:
-      - '/^feat(\(.+\))?!?:/i'
+      - '/^[a-z]+(\(.+\))?!:/i'
+  - label: 'enhancement'
+    title:
+      - '/^feat(\(.+\))?:/i'
   - label: 'bug'
     title:
       - '/^fix(\(.+\))?!?:/i'
@@ -68,6 +71,3 @@ autolabeler:
   - label: 'maintenance'
     title:
       - '/^(chore|refactor|ci|build|perf|style|test)(\(.+\))?!?:/i'
-  - label: 'major'
-    title:
-      - '/^[a-z]+(\(.+\))?!:/i'

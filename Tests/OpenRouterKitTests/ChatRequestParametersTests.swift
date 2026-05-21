@@ -512,15 +512,25 @@ struct ChatRequestParametersIntegrationTests {
 
         var streamedText = ""
         var chunkCount = 0
+        var receivedUsage: StreamingDelta.Usage?
 
-        let stream = try await client.chat.stream(request: request)
-        for try await text in stream {
-            streamedText += text
-            chunkCount += 1
+        let stream = try await client.chat.streamEvents(request: request)
+        for try await event in stream {
+            switch event {
+            case .text(let text):
+                streamedText += text
+                chunkCount += 1
+            case .finished(_, let usage):
+                if let usage { receivedUsage = usage }
+            case .audio, .toolCallDelta:
+                break
+            }
         }
 
         #expect(!streamedText.isEmpty, "Should receive streamed text")
         #expect(chunkCount >= 1, "Should receive at least one chunk")
+        let usage = try #require(receivedUsage, "includeUsage=true should produce a final usage payload")
+        #expect(usage.total_tokens > 0, "Usage total_tokens should be positive")
     }
 
     @Test("Request with parallel_tool_calls")
@@ -554,10 +564,8 @@ struct ChatRequestParametersIntegrationTests {
         let response = try await client.chat.send(request: request)
         let choice = try #require(response.choices.first)
 
-        // With parallel tool calls and required, we expect tool calls
-        if choice.finish_reason == "tool_calls" {
-            let toolCalls = try #require(choice.message.toolCalls)
-            #expect(toolCalls.count >= 1, "Should have at least one tool call, got \(toolCalls.count)")
-        }
+        #expect(choice.finish_reason == "tool_calls", "toolChoice: .required should force finish_reason == tool_calls, got \(choice.finish_reason ?? "nil")")
+        let toolCalls = try #require(choice.message.toolCalls, "toolChoice: .required should produce tool calls")
+        #expect(toolCalls.count >= 1, "Should have at least one tool call, got \(toolCalls.count)")
     }
 }

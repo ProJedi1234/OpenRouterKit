@@ -26,6 +26,9 @@ public protocol OpenRouterClientProtocol: Sendable {
 
     /// Service for API key management.
     var keys: KeysServiceProtocol { get }
+
+    /// Service for guardrail management.
+    var guardrails: GuardrailsServiceProtocol { get }
 }
 
 /// Protocol for chat completion operations.
@@ -149,4 +152,66 @@ public protocol EmbeddingsServiceProtocol: Sendable {
     /// - Returns: Same shape as general model listing (`data` array of ``Model``)
     /// - Throws: ``OpenRouterError`` if the request fails
     func listModels() async throws -> ModelsListResponse
+}
+
+/// Protocol for guardrail management operations.
+public protocol GuardrailsServiceProtocol: Sendable {
+    /// Lists guardrails with optional pagination and workspace filters.
+    func list(filters: GuardrailListFilters) async throws -> GuardrailListResponse
+
+    /// Creates a new guardrail.
+    func create(request: CreateGuardrailRequest) async throws -> GuardrailResponse
+
+    /// Gets a single guardrail by ID.
+    func get(id: String) async throws -> GuardrailResponse
+
+    /// Updates a guardrail.
+    func update(id: String, request: UpdateGuardrailRequest) async throws -> GuardrailResponse
+
+    /// Deletes a guardrail.
+    func delete(id: String) async throws -> DeleteGuardrailResponse
+
+    /// Lists all key assignments across all guardrails.
+    func listAllKeyAssignments(offset: String?, limit: Int?) async throws -> GuardrailKeyAssignmentListResponse
+
+    /// Lists key assignments for a specific guardrail.
+    func listKeyAssignments(
+        guardrailId: String,
+        offset: String?,
+        limit: Int?
+    ) async throws -> GuardrailKeyAssignmentListResponse
+
+    /// Bulk assigns keys to a guardrail.
+    func assignKeys(
+        guardrailId: String,
+        request: GuardrailAssignKeysRequest
+    ) async throws -> GuardrailAssignKeysResponse
+
+    /// Bulk removes key assignments from a guardrail.
+    func removeKeys(
+        guardrailId: String,
+        request: GuardrailAssignKeysRequest
+    ) async throws -> GuardrailAssignKeysResponse
+
+    /// Lists all member assignments across all guardrails.
+    func listAllMemberAssignments(offset: String?, limit: Int?) async throws -> GuardrailMemberAssignmentListResponse
+
+    /// Lists member assignments for a specific guardrail.
+    func listMemberAssignments(
+        guardrailId: String,
+        offset: String?,
+        limit: Int?
+    ) async throws -> GuardrailMemberAssignmentListResponse
+
+    /// Bulk assigns members to a guardrail.
+    func assignMembers(
+        guardrailId: String,
+        request: GuardrailAssignMembersRequest
+    ) async throws -> GuardrailAssignMembersResponse
+
+    /// Bulk removes member assignments from a guardrail.
+    func removeMembers(
+        guardrailId: String,
+        request: GuardrailAssignMembersRequest
+    ) async throws -> GuardrailAssignMembersResponse
 }

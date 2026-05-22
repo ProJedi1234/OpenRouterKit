@@ -29,16 +29,38 @@ package enum Endpoint {
     case deleteKey(hash: String)
     case getCurrentKey
 
+    // Guardrails CRUD
+    case listGuardrails(offset: String?, limit: Int?, workspaceId: String?)
+    case createGuardrail(CreateGuardrailRequest)
+    case getGuardrail(id: String)
+    case updateGuardrail(id: String, UpdateGuardrailRequest)
+    case deleteGuardrail(id: String)
+
+    // Guardrails assignments
+    case listAllKeyAssignments(offset: String?, limit: Int?)
+    case listAllMemberAssignments(offset: String?, limit: Int?)
+    case listGuardrailKeyAssignments(guardrailId: String, offset: String?, limit: Int?)
+    case assignGuardrailKeys(guardrailId: String, GuardrailAssignKeysRequest)
+    case removeGuardrailKeys(guardrailId: String, GuardrailAssignKeysRequest)
+    case listGuardrailMemberAssignments(guardrailId: String, offset: String?, limit: Int?)
+    case assignGuardrailMembers(guardrailId: String, GuardrailAssignMembersRequest)
+    case removeGuardrailMembers(guardrailId: String, GuardrailAssignMembersRequest)
+
     /// The HTTP method for this endpoint.
     var method: HTTPMethod {
         switch self {
-        case .chatCompletions, .createAudioTranscription, .createKey, .createEmbedding:
+        case .chatCompletions, .createAudioTranscription, .createKey, .createEmbedding,
+             .createGuardrail, .assignGuardrailKeys, .removeGuardrailKeys,
+             .assignGuardrailMembers, .removeGuardrailMembers:
             return .POST
-        case .updateKey:
+        case .updateKey, .updateGuardrail:
             return .PATCH
-        case .deleteKey:
+        case .deleteKey, .deleteGuardrail:
             return .DELETE
-        case .listModels, .listModelsForUser, .listEmbeddingModels, .listKeys, .getKey, .getCurrentKey:
+        case .listModels, .listModelsForUser, .listEmbeddingModels, .listKeys, .getKey, .getCurrentKey,
+             .listGuardrails, .getGuardrail,
+             .listAllKeyAssignments, .listAllMemberAssignments,
+             .listGuardrailKeyAssignments, .listGuardrailMemberAssignments:
             return .GET
         }
     }
@@ -64,6 +86,22 @@ package enum Endpoint {
             return "/keys/\(hash)"
         case .getCurrentKey:
             return "/key"
+        case .listGuardrails, .createGuardrail:
+            return "/guardrails"
+        case .getGuardrail(let id), .updateGuardrail(let id, _), .deleteGuardrail(let id):
+            return "/guardrails/\(id)"
+        case .listAllKeyAssignments:
+            return "/guardrails/assignments/keys"
+        case .listAllMemberAssignments:
+            return "/guardrails/assignments/members"
+        case .listGuardrailKeyAssignments(let guardrailId, _, _), .assignGuardrailKeys(let guardrailId, _):
+            return "/guardrails/\(guardrailId)/assignments/keys"
+        case .removeGuardrailKeys(let guardrailId, _):
+            return "/guardrails/\(guardrailId)/assignments/keys/remove"
+        case .listGuardrailMemberAssignments(let guardrailId, _, _), .assignGuardrailMembers(let guardrailId, _):
+            return "/guardrails/\(guardrailId)/assignments/members"
+        case .removeGuardrailMembers(let guardrailId, _):
+            return "/guardrails/\(guardrailId)/assignments/members/remove"
         }
     }
 
@@ -100,6 +138,30 @@ package enum Endpoint {
                 items.append(URLQueryItem(name: "offset", value: offset))
             }
             return items.isEmpty ? nil : items
+        case .listGuardrails(let offset, let limit, let workspaceId):
+            var items: [URLQueryItem] = []
+            if let offset {
+                items.append(URLQueryItem(name: "offset", value: offset))
+            }
+            if let limit {
+                items.append(URLQueryItem(name: "limit", value: String(limit)))
+            }
+            if let workspaceId {
+                items.append(URLQueryItem(name: "workspace_id", value: workspaceId))
+            }
+            return items.isEmpty ? nil : items
+        case .listAllKeyAssignments(let offset, let limit),
+             .listAllMemberAssignments(let offset, let limit),
+             .listGuardrailKeyAssignments(_, let offset, let limit),
+             .listGuardrailMemberAssignments(_, let offset, let limit):
+            var items: [URLQueryItem] = []
+            if let offset {
+                items.append(URLQueryItem(name: "offset", value: offset))
+            }
+            if let limit {
+                items.append(URLQueryItem(name: "limit", value: String(limit)))
+            }
+            return items.isEmpty ? nil : items
         default:
             return nil
         }
@@ -118,6 +180,14 @@ package enum Endpoint {
             return request
         case .updateKey(_, let request):
             return request
+        case .createGuardrail(let request):
+            return request
+        case .updateGuardrail(_, let request):
+            return request
+        case .assignGuardrailKeys(_, let request), .removeGuardrailKeys(_, let request):
+            return request
+        case .assignGuardrailMembers(_, let request), .removeGuardrailMembers(_, let request):
+            return request
         default:
             return nil
         }
@@ -126,7 +196,7 @@ package enum Endpoint {
     /// Expected HTTP status code for successful responses.
     var expectedStatusCode: Int {
         switch self {
-        case .createKey:
+        case .createKey, .createGuardrail:
             return 201
         default:
             return 200

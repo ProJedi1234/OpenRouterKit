@@ -120,6 +120,40 @@ struct ProviderPreferencesTests {
         #expect(json["data_collection"] as? String == "deny")
     }
 
+    @Test("sort price encodes as string")
+    func sortPriceStringEncoding() throws {
+        let json = try encodeJSON(ProviderPreferences(sort: .price))
+        #expect(json["sort"] as? String == "price")
+    }
+
+    @Test("sort object with nil partition omits partition key")
+    func sortObjectOmitsNilPartition() throws {
+        let json = try encodeJSON(
+            ProviderPreferences(sort: .options(by: .price, partition: nil))
+        )
+        let sort = try #require(json["sort"] as? [String: Any])
+        #expect(sort["by"] as? String == "price")
+        #expect(sort["partition"] == nil)
+    }
+
+    @Test("decoding invalid sort string throws")
+    func invalidSortStringThrows() throws {
+        let json = Data(
+            """
+            { "sort": "cheapest" }
+            """.utf8
+        )
+        #expect(throws: DecodingError.self) {
+            _ = try JSONDecoder().decode(ProviderPreferences.self, from: json)
+        }
+    }
+
+    @Test("empty preferences encodes to empty object")
+    func emptyPreferencesEncodesEmpty() throws {
+        let json = try encodeJSON(ProviderPreferences())
+        #expect(json.isEmpty)
+    }
+
     @Test("ChatRequest encodes nested provider preferences")
     func chatRequestProviderEncoding() throws {
         let request = ChatRequest(

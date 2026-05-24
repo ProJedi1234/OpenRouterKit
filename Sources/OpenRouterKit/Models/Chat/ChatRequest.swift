@@ -283,14 +283,19 @@ public enum ProviderDataCollection: String, Codable, Sendable {
 
 /// Metric used when `provider.sort` is specified as an object.
 public enum ProviderSortMetric: String, Codable, Sendable {
+    /// Rank providers by lowest price.
     case price
+    /// Rank providers by highest throughput.
     case throughput
+    /// Rank providers by lowest latency.
     case latency
 }
 
 /// Partition strategy for advanced `provider.sort` options.
 public enum ProviderSortPartition: String, Codable, Sendable {
+    /// Sort within each model independently (default behavior).
     case model
+    /// Sort across all eligible providers without partitioning.
     case none
 }
 
@@ -298,11 +303,21 @@ public enum ProviderSortPartition: String, Codable, Sendable {
 ///
 /// Encodes as a string (`"price"`, `"throughput"`, `"latency"`) or an object with `by` and optional `partition`.
 public enum ProviderSortPreference: Codable, Sendable, Equatable {
+    /// Sort eligible providers by lowest price (string form).
     case price
+    /// Sort eligible providers by highest throughput (string form).
     case throughput
+    /// Sort eligible providers by lowest latency (string form).
     case latency
+    /// Sort with an explicit metric and optional partition (object form).
+    ///
+    /// - Parameters:
+    ///   - by: The metric used to rank providers.
+    ///   - partition: Optional partition strategy. When omitted or `.model`, the
+    ///     `partition` key is not written on the wire.
     case options(by: ProviderSortMetric, partition: ProviderSortPartition?)
 
+    /// Decodes a `ProviderSortPreference` from either a string scalar or a keyed object.
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if let stringValue = try? container.decode(String.self) {
@@ -328,6 +343,7 @@ public enum ProviderSortPreference: Codable, Sendable, Equatable {
         self = .options(by: by, partition: partition)
     }
 
+    /// Encodes as a string when the case carries no associated values, or as a keyed object for `.options`.
     public func encode(to encoder: Encoder) throws {
         switch self {
         case .price:
@@ -415,9 +431,7 @@ public struct ProviderPreferences: Codable, Sendable, Equatable {
         if !order.isEmpty {
             try container.encode(order, forKey: .order)
         }
-        if let only, !only.isEmpty {
-            try container.encode(only, forKey: .only)
-        }
+        try container.encodeIfPresent(only, forKey: .only)
         try container.encodeIfPresent(sort, forKey: .sort)
         try container.encodeIfPresent(allowFallbacks, forKey: .allowFallbacks)
         try container.encodeIfPresent(dataCollection, forKey: .dataCollection)

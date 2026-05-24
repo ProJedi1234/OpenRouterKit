@@ -43,8 +43,8 @@ struct ReasoningTests {
 
     @Test("All reasoning effort levels encoding")
     func testAllReasoningEffortLevels() throws {
-        let efforts: [ReasoningEffort] = [.minimal, .low, .medium, .high]
-        let expectedStrings = ["minimal", "low", "medium", "high"]
+        let efforts: [ReasoningEffort] = [.xhigh, .high, .medium, .low, .minimal, .none]
+        let expectedStrings = ["xhigh", "high", "medium", "low", "minimal", "none"]
 
         for (effort, expectedString) in zip(efforts, expectedStrings) {
             let request = OpenRouterRequest(
@@ -299,10 +299,12 @@ struct ReasoningIntegrationTests {
     @Test("Test all reasoning effort levels")
     func testAllReasoningEffortLevelsAPI() async throws {
         let efforts: [(ReasoningEffort, String)] = [
-            (.minimal, "minimal"),
-            (.low, "low"),
+            (.xhigh, "xhigh"),
+            (.high, "high"),
             (.medium, "medium"),
-            (.high, "high")
+            (.low, "low"),
+            (.minimal, "minimal"),
+            (.none, "none")
         ]
 
         for (effort, name) in efforts {

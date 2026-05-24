@@ -324,7 +324,7 @@ if let reasoningTokens = response.usage?.completion_tokens_details?.reasoning_to
 }
 ```
 
-Effort levels: `.minimal`, `.low`, `.medium`, `.high`.
+Effort levels: `.xhigh`, `.high`, `.medium`, `.low`, `.minimal`, `.none` (disables reasoning).
 
 ## Provider Preferences
 

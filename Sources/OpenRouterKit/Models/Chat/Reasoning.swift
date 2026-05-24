@@ -21,13 +21,20 @@ public struct ReasoningConfiguration: Codable, Sendable {
 }
 
 /// Represents the effort level for reasoning.
+///
+/// Supported by OpenAI reasoning models (o1, o3, GPT-5 series) and Grok models.
+/// OpenRouter maps effort to a portion of `max_tokens` for reasoning (e.g. ~95% for `xhigh`, ~10% for `minimal`).
 public enum ReasoningEffort: String, Codable, Sendable {
-    /// Basic reasoning with minimal computational effort.
-    case minimal
-    /// Light reasoning for simple problems.
-    case low
-    /// Balanced reasoning for moderate complexity.
-    case medium
-    /// Deep reasoning for complex problems.
+    /// Largest reasoning budget (~95% of max_tokens).
+    case xhigh
+    /// Large reasoning budget (~80% of max_tokens).
     case high
+    /// Moderate reasoning budget (~50% of max_tokens).
+    case medium
+    /// Smaller reasoning budget (~20% of max_tokens).
+    case low
+    /// Minimal reasoning budget (~10% of max_tokens).
+    case minimal
+    /// Disables reasoning entirely.
+    case none
 }

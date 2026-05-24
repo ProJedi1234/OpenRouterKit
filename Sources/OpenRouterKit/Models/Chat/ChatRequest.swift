@@ -339,7 +339,7 @@ public enum ProviderSortPreference: Codable, Sendable, Equatable {
 
         let objectContainer = try decoder.container(keyedBy: ProviderSortOptionsCodingKeys.self)
         let by = try objectContainer.decode(ProviderSortMetric.self, forKey: .by)
-        let partition = try objectContainer.decodeIfPresent(ProviderSortPartition.self, forKey: .partition)
+        let partition = try objectContainer.decodeIfPresent(ProviderSortPartition.self, forKey: .partition) ?? .model
         self = .options(by: by, partition: partition)
     }
 

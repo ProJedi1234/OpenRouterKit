@@ -136,6 +136,26 @@ struct ProviderPreferencesTests {
         #expect(sort["partition"] == nil)
     }
 
+    @Test("sort options with model partition round-trips")
+    func sortOptionsModelPartitionRoundTrip() throws {
+        let original = ProviderPreferences(sort: .options(by: .latency, partition: .model))
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(ProviderPreferences.self, from: data)
+        #expect(decoded == original)
+        #expect(decoded.sort == .options(by: .latency, partition: .model))
+    }
+
+    @Test("sort object without partition decodes as model default")
+    func sortObjectWithoutPartitionDefaultsToModel() throws {
+        let json = Data(
+            """
+            { "sort": { "by": "price" } }
+            """.utf8
+        )
+        let prefs = try JSONDecoder().decode(ProviderPreferences.self, from: json)
+        #expect(prefs.sort == .options(by: .price, partition: .model))
+    }
+
     @Test("decoding invalid sort string throws")
     func invalidSortStringThrows() throws {
         let json = Data(

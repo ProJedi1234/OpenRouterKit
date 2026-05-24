@@ -335,7 +335,7 @@ Control how OpenRouter selects a provider endpoint for your model:
 | `order` | You want providers tried in a **fixed priority sequence** (first choice, then fallbacks). |
 | `only` | You want an **allowlist** of provider slugs (unordered); OpenRouter picks among them. |
 | `sort` | You want providers ranked by `price`, `throughput`, or `latency` (disables default load balancing). |
-| `allowFallbacks` | Set to `false` to restrict routing to your `order` / `only` list only. |
+| `allowFallbacks` | Set to `false` to restrict routing to your `order` / `only` list. |
 
 **Priority order** (try Azure, then OpenAI, with fallbacks):
 

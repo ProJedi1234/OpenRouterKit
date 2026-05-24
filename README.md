@@ -164,7 +164,7 @@ for model in embeddingModels.data {
 }
 ```
 
-Optional fields include `encodingFormat` (`.float` or `.base64`), `dimensions`, `inputType`, `user`, and `provider` routing via `ProviderPreferences` (e.g. `order`, `allowFallbacks`, `dataCollection`). Multimodal input uses the same `ContentPart` text / `image_url` shape as chat messages, wrapped in `EmbeddingMultimodalBlock` and `EmbeddingInput.multimodalBlocks(...)`.
+Optional fields include `encodingFormat` (`.float` or `.base64`), `dimensions`, `inputType`, `user`, and `provider` routing via `ProviderPreferences` (e.g. `order`, `only`, `sort`, `allowFallbacks`, `dataCollection`). Multimodal input uses the same `ContentPart` text / `image_url` shape as chat messages, wrapped in `EmbeddingMultimodalBlock` and `EmbeddingInput.multimodalBlocks(...)`.
 
 The client also accepts optional `siteURL` and `siteName` parameters that show up in your OpenRouter dashboard, a custom `baseURL` if you need one, and a custom `URLSession` for full control over networking.
 
@@ -328,7 +328,16 @@ Effort levels: `.minimal`, `.low`, `.medium`, `.high`.
 
 ## Provider Preferences
 
-Route requests to preferred providers:
+Control how OpenRouter selects a provider endpoint for your model:
+
+| Field | Use when |
+| --- | --- |
+| `order` | You want providers tried in a **fixed priority sequence** (first choice, then fallbacks). |
+| `only` | You want an **allowlist** of provider slugs (unordered); OpenRouter picks among them. |
+| `sort` | You want providers ranked by `price`, `throughput`, or `latency` (disables default load balancing). |
+| `allowFallbacks` | Set to `false` to restrict routing to your `order` / `only` list only. |
+
+**Priority order** (try Azure, then OpenAI, with fallbacks):
 
 ```swift
 let request = ChatRequest(
@@ -337,6 +346,28 @@ let request = ChatRequest(
     provider: ProviderPreferences(order: ["azure", "openai"])
 )
 ```
+
+**Allowlist + sort by throughput** (only DeepInfra or Together, prefer highest throughput):
+
+```swift
+let request = ChatRequest(
+    messages: [Message(role: .user, content: .string("Hello"))],
+    model: "meta-llama/llama-3.3-70b-instruct",
+    provider: ProviderPreferences(
+        only: ["deepinfra", "together"],
+        sort: .throughput,
+        allowFallbacks: false
+    )
+)
+```
+
+**Strict allowlist** (Azure only, no other providers):
+
+```swift
+provider: ProviderPreferences(only: ["azure"], allowFallbacks: false)
+```
+
+Advanced `sort` with `partition: .none` sorts endpoints globally across model fallbacks (see [OpenRouter provider routing](https://openrouter.ai/docs/guides/routing/provider-selection)). Model slug shortcuts `:nitro` (throughput) and `:floor` (price) are equivalent to setting `sort` without using `ProviderPreferences`.
 
 ## Multi-Model Routing
 

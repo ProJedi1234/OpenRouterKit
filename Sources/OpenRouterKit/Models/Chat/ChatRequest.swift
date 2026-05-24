@@ -281,10 +281,89 @@ public enum ProviderDataCollection: String, Codable, Sendable {
     case allow
 }
 
+/// Metric used when `provider.sort` is specified as an object.
+public enum ProviderSortMetric: String, Codable, Sendable {
+    case price
+    case throughput
+    case latency
+}
+
+/// Partition strategy for advanced `provider.sort` options.
+public enum ProviderSortPartition: String, Codable, Sendable {
+    case model
+    case none
+}
+
+/// Sort preference for provider routing (`provider.sort`).
+///
+/// Encodes as a string (`"price"`, `"throughput"`, `"latency"`) or an object with `by` and optional `partition`.
+public enum ProviderSortPreference: Codable, Sendable, Equatable {
+    case price
+    case throughput
+    case latency
+    case options(by: ProviderSortMetric, partition: ProviderSortPartition?)
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let stringValue = try? container.decode(String.self) {
+            switch stringValue {
+            case "price":
+                self = .price
+            case "throughput":
+                self = .throughput
+            case "latency":
+                self = .latency
+            default:
+                throw DecodingError.dataCorruptedError(
+                    in: container,
+                    debugDescription: "Invalid provider sort string: \(stringValue)"
+                )
+            }
+            return
+        }
+
+        let objectContainer = try decoder.container(keyedBy: ProviderSortOptionsCodingKeys.self)
+        let by = try objectContainer.decode(ProviderSortMetric.self, forKey: .by)
+        let partition = try objectContainer.decodeIfPresent(ProviderSortPartition.self, forKey: .partition)
+        self = .options(by: by, partition: partition)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        switch self {
+        case .price:
+            var container = encoder.singleValueContainer()
+            try container.encode("price")
+        case .throughput:
+            var container = encoder.singleValueContainer()
+            try container.encode("throughput")
+        case .latency:
+            var container = encoder.singleValueContainer()
+            try container.encode("latency")
+        case .options(let by, let partition):
+            var container = encoder.container(keyedBy: ProviderSortOptionsCodingKeys.self)
+            try container.encode(by, forKey: .by)
+            if let partition, partition != .model {
+                try container.encode(partition, forKey: .partition)
+            }
+        }
+    }
+
+    private enum ProviderSortOptionsCodingKeys: String, CodingKey {
+        case by
+        case partition
+    }
+}
+
 /// Represents provider preferences in a chat or embeddings request.
 public struct ProviderPreferences: Codable, Sendable, Equatable {
-    /// Ordered list of preferred providers.
+    /// Ordered list of preferred providers to try in sequence.
     public let order: [String]
+
+    /// Unordered allowlist of provider slugs permitted for this request.
+    public let only: [String]?
+
+    /// How eligible providers are sorted (disables default load balancing when set).
+    public let sort: ProviderSortPreference?
 
     /// Whether backup providers may serve the request when the primary is unavailable.
     public let allowFallbacks: Bool?
@@ -294,6 +373,8 @@ public struct ProviderPreferences: Codable, Sendable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case order
+        case only
+        case sort
         case allowFallbacks = "allow_fallbacks"
         case dataCollection = "data_collection"
     }
@@ -301,15 +382,21 @@ public struct ProviderPreferences: Codable, Sendable, Equatable {
     /// Creates new provider preferences.
     ///
     /// - Parameters:
-    ///   - order: Ordered list of provider names (may be empty if only other flags are set).
+    ///   - order: Ordered list of provider slugs to try in priority order.
+    ///   - only: Allowlist of provider slugs (unordered); use with `sort` to control selection within the set.
+    ///   - sort: Sort strategy for eligible providers (`price`, `throughput`, or `latency`).
     ///   - allowFallbacks: Whether to allow fallback providers.
     ///   - dataCollection: Optional data collection policy for routing.
     public init(
-        order: [String],
+        order: [String] = [],
+        only: [String]? = nil,
+        sort: ProviderSortPreference? = nil,
         allowFallbacks: Bool? = nil,
         dataCollection: ProviderDataCollection? = nil
     ) {
         self.order = order
+        self.only = only
+        self.sort = sort
         self.allowFallbacks = allowFallbacks
         self.dataCollection = dataCollection
     }
@@ -317,6 +404,8 @@ public struct ProviderPreferences: Codable, Sendable, Equatable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.order = try container.decodeIfPresent([String].self, forKey: .order) ?? []
+        self.only = try container.decodeIfPresent([String].self, forKey: .only)
+        self.sort = try container.decodeIfPresent(ProviderSortPreference.self, forKey: .sort)
         self.allowFallbacks = try container.decodeIfPresent(Bool.self, forKey: .allowFallbacks)
         self.dataCollection = try container.decodeIfPresent(ProviderDataCollection.self, forKey: .dataCollection)
     }
@@ -326,6 +415,10 @@ public struct ProviderPreferences: Codable, Sendable, Equatable {
         if !order.isEmpty {
             try container.encode(order, forKey: .order)
         }
+        if let only, !only.isEmpty {
+            try container.encode(only, forKey: .only)
+        }
+        try container.encodeIfPresent(sort, forKey: .sort)
         try container.encodeIfPresent(allowFallbacks, forKey: .allowFallbacks)
         try container.encodeIfPresent(dataCollection, forKey: .dataCollection)
     }

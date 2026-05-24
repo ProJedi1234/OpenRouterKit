@@ -33,7 +33,7 @@ struct ProviderPreferencesTests {
     @Test("sort encodes as object with partition")
     func sortObjectEncoding() throws {
         let json = try encodeJSON(
-            ProviderPreferences(sort: .options(by: .price, partition: .none))
+            ProviderPreferences(sort: .options(by: .price, partition: ProviderSortPartition.none))
         )
         let sort = try #require(json["sort"] as? [String: Any])
         #expect(sort["by"] as? String == "price")
@@ -67,13 +67,15 @@ struct ProviderPreferencesTests {
 
     @Test("round-trip decode preserves only and sort")
     func roundTripDecode() throws {
-        let json = """
-        {
-          "only": ["deepinfra", "together"],
-          "sort": "latency",
-          "allow_fallbacks": true
-        }
-        """.data(using: .utf8)!
+        let json = Data(
+            """
+            {
+              "only": ["deepinfra", "together"],
+              "sort": "latency",
+              "allow_fallbacks": true
+            }
+            """.utf8
+        )
         let prefs = try JSONDecoder().decode(ProviderPreferences.self, from: json)
         #expect(prefs.only == ["deepinfra", "together"])
         #expect(prefs.sort == .latency)
@@ -88,13 +90,15 @@ struct ProviderPreferencesTests {
 
     @Test("round-trip decode preserves sort object")
     func roundTripSortObject() throws {
-        let json = """
-        {
-          "sort": { "by": "throughput", "partition": "none" }
-        }
-        """.data(using: .utf8)!
+        let json = Data(
+            """
+            {
+              "sort": { "by": "throughput", "partition": "none" }
+            }
+            """.utf8
+        )
         let prefs = try JSONDecoder().decode(ProviderPreferences.self, from: json)
-        #expect(prefs.sort == .options(by: .throughput, partition: .none))
+        #expect(prefs.sort == .options(by: .throughput, partition: ProviderSortPartition.none))
 
         let encoded = try encodeJSON(prefs)
         let sort = try #require(encoded["sort"] as? [String: Any])

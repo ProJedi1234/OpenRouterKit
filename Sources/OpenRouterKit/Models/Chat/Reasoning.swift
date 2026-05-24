@@ -8,7 +8,7 @@
 import Foundation
 
 /// Represents reasoning configuration for advanced reasoning capabilities.
-public struct ReasoningConfiguration: Codable, Sendable {
+public struct ReasoningConfiguration: Codable, Sendable, Equatable {
     /// The effort level for reasoning.
     public var effort: ReasoningEffort
 
@@ -24,7 +24,7 @@ public struct ReasoningConfiguration: Codable, Sendable {
 ///
 /// Supported by OpenAI reasoning models (o1, o3, GPT-5 series) and Grok models.
 /// OpenRouter maps effort to a portion of `max_tokens` for reasoning (e.g. ~95% for `xhigh`, ~10% for `minimal`).
-public enum ReasoningEffort: String, Codable, Sendable {
+public enum ReasoningEffort: String, Codable, Sendable, Equatable {
     /// Largest reasoning budget (~95% of max_tokens).
     case xhigh
     /// Large reasoning budget (~80% of max_tokens).

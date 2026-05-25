@@ -47,7 +47,7 @@ final class NIOHTTPClient: OpenRouterKit.HTTPClient, @unchecked Sendable {
 
         if status != expectedStatusCode {
             let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
-            let rawBody = data.isEmpty ? nil : String(decoding: data, as: UTF8.self)
+            let rawBody = String(bytes: data, encoding: .utf8)
             throw OpenRouterError(
                 httpStatusCode: status,
                 errorResponse: errorResponse,
@@ -59,7 +59,7 @@ final class NIOHTTPClient: OpenRouterKit.HTTPClient, @unchecked Sendable {
             return try JSONDecoder().decode(T.self, from: data)
         } catch {
             let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
-            let rawBody = data.isEmpty ? nil : String(decoding: data, as: UTF8.self)
+            let rawBody = String(bytes: data, encoding: .utf8)
             throw OpenRouterError(
                 httpStatusCode: errorResponse?.error.code ?? status,
                 errorResponse: errorResponse,
@@ -94,7 +94,7 @@ final class NIOHTTPClient: OpenRouterKit.HTTPClient, @unchecked Sendable {
             let buffer = try await response.body.collect(upTo: 1 * 1024 * 1024) // 1 MB
             let data = Data(buffer: buffer)
             let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
-            let rawBody = data.isEmpty ? nil : String(decoding: data, as: UTF8.self)
+            let rawBody = String(bytes: data, encoding: .utf8)
             throw OpenRouterError(
                 httpStatusCode: status,
                 errorResponse: errorResponse,

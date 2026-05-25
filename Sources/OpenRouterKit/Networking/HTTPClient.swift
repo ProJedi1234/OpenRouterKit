@@ -63,7 +63,7 @@ final class URLSessionHTTPClient: HTTPClient {
         // Handle error status codes
         if httpResponse.statusCode != expectedStatusCode {
             let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
-            let rawBody = data.isEmpty ? nil : String(decoding: data, as: UTF8.self)
+            let rawBody = String(bytes: data, encoding: .utf8)
             throw OpenRouterError(
                 httpStatusCode: httpResponse.statusCode,
                 errorResponse: errorResponse,
@@ -77,7 +77,7 @@ final class URLSessionHTTPClient: HTTPClient {
         } catch {
             // If decoding fails, try to extract error information
             let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data)
-            let rawBody = data.isEmpty ? nil : String(decoding: data, as: UTF8.self)
+            let rawBody = String(bytes: data, encoding: .utf8)
             throw OpenRouterError(
                 httpStatusCode: errorResponse?.error.code ?? httpResponse.statusCode,
                 errorResponse: errorResponse,
@@ -121,7 +121,7 @@ final class URLSessionHTTPClient: HTTPClient {
                 data.append(byte)
             }
             let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: errorData)
-            let rawBody = errorData.isEmpty ? nil : String(decoding: errorData, as: UTF8.self)
+            let rawBody = String(bytes: errorData, encoding: .utf8)
             throw OpenRouterError(
                 httpStatusCode: httpResponse.statusCode,
                 errorResponse: errorResponse,

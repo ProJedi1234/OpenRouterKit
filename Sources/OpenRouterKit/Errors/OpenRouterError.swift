@@ -31,6 +31,12 @@ public struct OpenRouterError: Error {
     /// Optional metadata associated with the error
     public let metadata: [String: String]?
 
+    /// Raw HTTP response body returned by the server when the structured error
+    /// response could not be decoded. Truncated to 1,000 characters with an
+    /// ellipsis appended when longer. `nil` when the body was empty or when a
+    /// structured `errorResponse` was successfully decoded.
+    public let rawResponseBody: String?
+
     /// Enumeration of error types that can occur
     public enum ErrorType: Sendable {
         /// Bad request (400)
@@ -56,10 +62,16 @@ public struct OpenRouterError: Error {
         case streamingUnavailable
     }
 
-    private init(type: ErrorType, message: String, metadata: [String: String]?) {
+    private init(
+        type: ErrorType,
+        message: String,
+        metadata: [String: String]?,
+        rawResponseBody: String? = nil
+    ) {
         self.type = type
         self.message = message
         self.metadata = metadata
+        self.rawResponseBody = rawResponseBody
     }
 
     /// Creates a streaming-unavailable error for non-Darwin platforms.
@@ -71,9 +83,21 @@ public struct OpenRouterError: Error {
         metadata: nil
     )
 
-    package init(httpStatusCode: Int, errorResponse: ErrorResponse?) {
+    package init(httpStatusCode: Int, errorResponse: ErrorResponse?, rawBody: String? = nil) {
         self.message = errorResponse?.error.message ?? "Unknown error occurred"
         self.metadata = errorResponse?.error.metadata
+
+        if errorResponse?.error.message != nil {
+            self.rawResponseBody = nil
+        } else if let rawBody, !rawBody.isEmpty {
+            if rawBody.count > 1_000 {
+                self.rawResponseBody = String(rawBody.prefix(1_000)) + "\u{2026}"
+            } else {
+                self.rawResponseBody = rawBody
+            }
+        } else {
+            self.rawResponseBody = nil
+        }
 
         switch httpStatusCode {
         case 400:

@@ -83,6 +83,12 @@ public struct ChatResponse: Codable, Sendable {
         public struct OutputTokensDetails: Codable, Sendable {
             /// Number of tokens used for reasoning (if applicable).
             public var reasoning_tokens: Int?
+
+            /// Number of tokens used for generated audio.
+            public var audio_tokens: Int?
+
+            /// Number of tokens used for generated images.
+            public var image_tokens: Int?
         }
 
         /// Detailed breakdown of prompt token usage.

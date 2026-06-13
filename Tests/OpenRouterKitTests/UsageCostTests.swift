@@ -44,7 +44,9 @@ struct UsageCostTests {
               "video_tokens": 0
             },
             "completion_tokens_details": {
-              "reasoning_tokens": 0
+              "reasoning_tokens": 0,
+              "audio_tokens": 12,
+              "image_tokens": 34
             }
           }
         }
@@ -62,6 +64,9 @@ struct UsageCostTests {
         #expect(usage.prompt_tokens_details?.cache_write_tokens == 100)
         #expect(usage.prompt_tokens_details?.audio_tokens == 0)
         #expect(usage.prompt_tokens_details?.video_tokens == 0)
+        #expect(usage.completion_tokens_details?.reasoning_tokens == 0)
+        #expect(usage.completion_tokens_details?.audio_tokens == 12)
+        #expect(usage.completion_tokens_details?.image_tokens == 34)
     }
 
     @Test("Decodes usage without cost fields")

@@ -7,6 +7,9 @@
 
 import Testing
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 @testable import OpenRouterKit
 
 @Suite("Usage Cost Field Decoding Tests")
@@ -102,5 +105,49 @@ struct UsageCostTests {
         #expect(usage.cost == nil)
         #expect(usage.cost_details == nil)
         #expect(usage.prompt_tokens_details == nil)
+    }
+}
+
+@Suite("Usage Cost Integration Tests",
+       .enabled(if: ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"]?.isEmpty == false))
+struct UsageCostIntegrationTests {
+    let client: OpenRouterClient
+
+    init() throws {
+        let apiKey = try #require(ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"])
+
+        #if canImport(FoundationNetworking)
+        let session = URLSession(configuration: .default)
+        #else
+        let session = URLSession.shared
+        #endif
+
+        client = OpenRouterClient(
+            apiKey: apiKey,
+            siteURL: "https://github.com",
+            siteName: "Swift OpenRouterKit Tests",
+            session: session
+        )
+    }
+
+    @Test("Non-streaming text chat completion includes usage cost")
+    func chatCompletionIncludesUsageCost() async throws {
+        let request = OpenRouterRequest(
+            messages: [Message(role: .user, content: .string("Reply with one word: ok"))],
+            model: "google/gemini-3-flash-preview",
+            maxTokens: 5
+        )
+
+        let response = try await client.chat.send(request: request)
+        let usage = try #require(response.usage, "OpenRouter should return usage on chat completions")
+
+        #expect(usage.prompt_tokens > 0)
+        #expect(usage.completion_tokens > 0)
+        #expect(usage.total_tokens == usage.prompt_tokens + usage.completion_tokens)
+
+        let cost = try #require(usage.cost, "OpenRouter should return cost in usage")
+        #expect(cost >= 0, "cost should be non-negative")
+
+        print("Usage cost: \(cost) credits, tokens: \(usage.total_tokens)")
     }
 }

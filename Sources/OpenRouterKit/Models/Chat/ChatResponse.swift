@@ -67,13 +67,49 @@ public struct ChatResponse: Codable, Sendable {
         /// Total number of tokens used.
         public var total_tokens: Int
 
+        /// Cost in credits charged for the request.
+        public var cost: Double?
+
         /// Detailed breakdown of completion tokens.
         public var completion_tokens_details: OutputTokensDetails?
+
+        /// Detailed breakdown of request cost.
+        public var cost_details: CostDetails?
+
+        /// Detailed breakdown of prompt tokens.
+        public var prompt_tokens_details: PromptTokensDetails?
 
         /// Detailed breakdown of output tokens.
         public struct OutputTokensDetails: Codable, Sendable {
             /// Number of tokens used for reasoning (if applicable).
             public var reasoning_tokens: Int?
+        }
+
+        /// Detailed breakdown of prompt token usage.
+        public struct PromptTokensDetails: Codable, Sendable {
+            /// Number of tokens read from the cache.
+            public var cached_tokens: Int?
+
+            /// Number of tokens written to the cache.
+            public var cache_write_tokens: Int?
+
+            /// Number of tokens used for input audio.
+            public var audio_tokens: Int?
+
+            /// Number of tokens used for input video.
+            public var video_tokens: Int?
+        }
+
+        /// Detailed breakdown of request cost.
+        public struct CostDetails: Codable, Sendable {
+            /// Cost charged by the upstream AI provider.
+            public var upstream_inference_cost: Double?
+
+            /// Upstream cost attributed to the prompt.
+            public var upstream_inference_prompt_cost: Double?
+
+            /// Upstream cost attributed to completions.
+            public var upstream_inference_completions_cost: Double?
         }
     }
 }

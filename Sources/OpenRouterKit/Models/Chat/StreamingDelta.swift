@@ -80,13 +80,23 @@ public struct StreamingDelta: Codable {
         /// Total number of tokens used.
         public var total_tokens: Int
 
+        /// Cost in credits charged for the request.
+        public var cost: Double?
+
         /// Detailed breakdown of completion tokens.
         public var completion_tokens_details: OutputTokensDetails?
+
+        /// Detailed breakdown of request cost.
+        public var cost_details: ChatResponse.Usage.CostDetails?
+
+        /// Detailed breakdown of prompt tokens.
+        public var prompt_tokens_details: ChatResponse.Usage.PromptTokensDetails?
 
         /// Detailed breakdown of output tokens.
         public struct OutputTokensDetails: Codable, Sendable {
             /// Number of tokens used for reasoning (if applicable).
             public var reasoning_tokens: Int?
         }
+
     }
 }

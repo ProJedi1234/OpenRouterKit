@@ -19,7 +19,7 @@ jobs:
     name: SwiftLint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: SwiftLint
         uses: norio-nomura/action-swiftlint@3.2.1
 
@@ -29,9 +29,9 @@ jobs:
     container:
       image: swift:6.2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache Swift PM build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .build
           key: linux-swift6.2-spm-${{ hashFiles('Package.swift') }}
@@ -51,9 +51,9 @@ jobs:
       image: swift:latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache Swift PM build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .build
           key: linux-swift-latest-spm-${{ hashFiles('Package.swift') }}
@@ -74,9 +74,9 @@ jobs:
     container:
       image: swift:6.2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Cache Swift PM build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: .build
           key: linux-swift6.2-spm-${{ hashFiles('Package.swift') }}

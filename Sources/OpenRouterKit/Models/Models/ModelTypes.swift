@@ -95,6 +95,30 @@ extension ModelsServiceProtocol {
 }
 // swiftlint:enable function_parameter_count
 
+/// Decoding helpers for vocabularies the API can extend at any time.
+///
+/// OpenRouter adds tokenizers, instruct types, modalities and supported parameters
+/// without warning. Decoding those strictly means one unrecognised string fails the
+/// entire `/models` payload and takes the whole SDK down with it, so unknown values
+/// are dropped instead.
+extension KeyedDecodingContainer {
+    func decodeLenient<T: RawRepresentable & Decodable>(
+        _ type: T.Type,
+        forKey key: Key
+    ) throws -> T? where T.RawValue == String {
+        guard let raw = try decodeIfPresent(String.self, forKey: key) else { return nil }
+        return T(rawValue: raw)
+    }
+
+    func decodeLenientArray<T: RawRepresentable & Decodable>(
+        _ type: T.Type,
+        forKey key: Key
+    ) throws -> [T] where T.RawValue == String {
+        guard let raws = try decodeIfPresent([String].self, forKey: key) else { return [] }
+        return raws.compactMap(T.init(rawValue:))
+    }
+}
+
 /// Represents a model available on OpenRouter.
 ///
 /// Contains information about the model including pricing, capabilities, and architecture.
@@ -152,6 +176,23 @@ public struct Model: Codable, Sendable {
         case perRequestLimits = "per_request_limits"
         case supportedParameters = "supported_parameters"
         case defaultParameters = "default_parameters"
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        canonicalSlug = try container.decode(String.self, forKey: .canonicalSlug)
+        huggingFaceId = try container.decodeIfPresent(String.self, forKey: .huggingFaceId)
+        name = try container.decode(String.self, forKey: .name)
+        created = try container.decode(Double.self, forKey: .created)
+        description = try container.decodeIfPresent(String.self, forKey: .description)
+        pricing = try container.decode(PublicPricing.self, forKey: .pricing)
+        contextLength = try container.decodeIfPresent(Double.self, forKey: .contextLength)
+        architecture = try container.decode(ModelArchitecture.self, forKey: .architecture)
+        topProvider = try container.decode(TopProviderInfo.self, forKey: .topProvider)
+        perRequestLimits = try container.decodeIfPresent(PerRequestLimits.self, forKey: .perRequestLimits)
+        supportedParameters = try container.decodeLenientArray(Parameter.self, forKey: .supportedParameters)
+        defaultParameters = try container.decodeIfPresent(DefaultParameters.self, forKey: .defaultParameters)
     }
 }
 
@@ -305,6 +346,15 @@ public struct ModelArchitecture: Codable, Sendable {
         case inputModalities = "input_modalities"
         case outputModalities = "output_modalities"
     }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        tokenizer = try container.decodeLenient(ModelGroup.self, forKey: .tokenizer)
+        instructType = try container.decodeLenient(ModelArchitectureInstructType.self, forKey: .instructType)
+        modality = try container.decodeIfPresent(String.self, forKey: .modality)
+        inputModalities = try container.decodeLenientArray(InputModality.self, forKey: .inputModalities)
+        outputModalities = try container.decodeLenientArray(OutputModality.self, forKey: .outputModalities)
+    }
 }
 
 /// Represents top provider information.
@@ -361,6 +411,7 @@ public enum Parameter: String, Codable, Sendable {
     case tools
     case toolChoice = "tool_choice"
     case parallelToolCalls = "parallel_tool_calls"
+    case prediction
     case includeReasoning = "include_reasoning"
     case reasoning
     case reasoningEffort = "reasoning_effort"

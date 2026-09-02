@@ -4,7 +4,7 @@ Swift 6.0+
 Platforms
 License
 
-A Swift SDK for the [OpenRouter](https://openrouter.ai/docs/quickstart) API. Chat completions, audio transcription, embeddings, streaming, tool calling, image and audio inputs, reasoning, model browsing, API key management — all with zero dependencies and native async/await.
+An unofficial Swift SDK for the [OpenRouter](https://openrouter.ai/docs/quickstart) API. Chat completions, audio transcription, embeddings, streaming, tool calling, image and audio inputs, reasoning, model browsing, and API key management. Zero dependencies, native async/await.
 
 ## Features
 

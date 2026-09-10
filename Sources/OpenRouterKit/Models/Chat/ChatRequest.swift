@@ -387,12 +387,16 @@ public struct ProviderPreferences: Codable, Sendable, Equatable {
     /// Restrict routing to providers that meet this data collection policy.
     public let dataCollection: ProviderDataCollection?
 
+    /// Restrict routing to providers with a zero data retention policy.
+    public let zdr: Bool?
+
     enum CodingKeys: String, CodingKey {
         case order
         case only
         case sort
         case allowFallbacks = "allow_fallbacks"
         case dataCollection = "data_collection"
+        case zdr
     }
 
     /// Creates new provider preferences.
@@ -403,18 +407,21 @@ public struct ProviderPreferences: Codable, Sendable, Equatable {
     ///   - sort: Sort strategy for eligible providers (`price`, `throughput`, or `latency`).
     ///   - allowFallbacks: Whether to allow fallback providers.
     ///   - dataCollection: Optional data collection policy for routing.
+    ///   - zdr: Whether to route only to providers with a zero data retention policy.
     public init(
         order: [String] = [],
         only: [String]? = nil,
         sort: ProviderSortPreference? = nil,
         allowFallbacks: Bool? = nil,
-        dataCollection: ProviderDataCollection? = nil
+        dataCollection: ProviderDataCollection? = nil,
+        zdr: Bool? = nil
     ) {
         self.order = order
         self.only = only
         self.sort = sort
         self.allowFallbacks = allowFallbacks
         self.dataCollection = dataCollection
+        self.zdr = zdr
     }
 
     public init(from decoder: Decoder) throws {
@@ -424,6 +431,7 @@ public struct ProviderPreferences: Codable, Sendable, Equatable {
         self.sort = try container.decodeIfPresent(ProviderSortPreference.self, forKey: .sort)
         self.allowFallbacks = try container.decodeIfPresent(Bool.self, forKey: .allowFallbacks)
         self.dataCollection = try container.decodeIfPresent(ProviderDataCollection.self, forKey: .dataCollection)
+        self.zdr = try container.decodeIfPresent(Bool.self, forKey: .zdr)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -435,6 +443,7 @@ public struct ProviderPreferences: Codable, Sendable, Equatable {
         try container.encodeIfPresent(sort, forKey: .sort)
         try container.encodeIfPresent(allowFallbacks, forKey: .allowFallbacks)
         try container.encodeIfPresent(dataCollection, forKey: .dataCollection)
+        try container.encodeIfPresent(zdr, forKey: .zdr)
     }
 }
 

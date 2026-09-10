@@ -164,7 +164,7 @@ for model in embeddingModels.data {
 }
 ```
 
-Optional fields include `encodingFormat` (`.float` or `.base64`), `dimensions`, `inputType`, `user`, and `provider` routing via `ProviderPreferences` (e.g. `order`, `only`, `sort`, `allowFallbacks`, `dataCollection`). Multimodal input uses the same `ContentPart` text / `image_url` shape as chat messages, wrapped in `EmbeddingMultimodalBlock` and `EmbeddingInput.multimodalBlocks(...)`.
+Optional fields include `encodingFormat` (`.float` or `.base64`), `dimensions`, `inputType`, `user`, and `provider` routing via `ProviderPreferences` (e.g. `order`, `only`, `sort`, `allowFallbacks`, `dataCollection`, `zdr`). Multimodal input uses the same `ContentPart` text / `image_url` shape as chat messages, wrapped in `EmbeddingMultimodalBlock` and `EmbeddingInput.multimodalBlocks(...)`.
 
 The client also accepts optional `siteURL` and `siteName` parameters that show up in your OpenRouter dashboard, a custom `baseURL` if you need one, and a custom `URLSession` for full control over networking.
 
@@ -336,6 +336,7 @@ Control how OpenRouter selects a provider endpoint for your model:
 | `only` | You want an **allowlist** of provider slugs (unordered); OpenRouter picks among them. |
 | `sort` | You want providers ranked by `price`, `throughput`, or `latency` (disables default load balancing). |
 | `allowFallbacks` | Set to `false` to restrict routing to your `order` / `only` list. |
+| `zdr` | Set to `true` to route only to providers with a [zero data retention](https://openrouter.ai/docs/features/zdr) policy. |
 
 **Priority order** (try Azure, then OpenAI, with fallbacks):
 

@@ -2,7 +2,7 @@
 //  ProviderPreferencesTests.swift
 //  OpenRouterKitTests
 //
-//  Unit tests for provider routing preferences (only, sort, order).
+//  Unit tests for provider routing preferences (only, sort, order, zdr).
 //
 
 import Foundation
@@ -174,6 +174,35 @@ struct ProviderPreferencesTests {
         #expect(json.isEmpty)
     }
 
+    @Test("zdr encodes as boolean")
+    func zdrEncoding() throws {
+        let json = try encodeJSON(ProviderPreferences(zdr: true))
+        #expect(json["zdr"] as? Bool == true)
+    }
+
+    @Test("omitted zdr writes no zdr key")
+    func omittedZDROmitsKey() throws {
+        let json = try encodeJSON(ProviderPreferences(only: ["azure"], dataCollection: .deny))
+        #expect(json["zdr"] == nil)
+    }
+
+    @Test("round-trip decode preserves zdr false")
+    func roundTripZDRFalse() throws {
+        let json = Data(
+            """
+            {
+              "only": ["azure"],
+              "zdr": false
+            }
+            """.utf8
+        )
+        let prefs = try JSONDecoder().decode(ProviderPreferences.self, from: json)
+        #expect(prefs.zdr == false)
+
+        let encoded = try encodeJSON(prefs)
+        #expect(encoded["zdr"] as? Bool == false)
+    }
+
     @Test("ChatRequest encodes nested provider preferences")
     func chatRequestProviderEncoding() throws {
         let request = ChatRequest(
@@ -191,5 +220,19 @@ struct ProviderPreferencesTests {
         #expect((provider["only"] as? [String]) == ["deepinfra"])
         #expect(provider["sort"] as? String == "throughput")
         #expect(provider["allow_fallbacks"] as? Bool == false)
+    }
+
+    @Test("ChatRequest encodes nested zdr flag")
+    func chatRequestZDREncoding() throws {
+        let request = ChatRequest(
+            messages: [Message(role: .user, content: .string("Hello"))],
+            model: "meta-llama/llama-3.3-70b-instruct",
+            provider: ProviderPreferences(zdr: true)
+        )
+        let data = try JSONEncoder().encode(request)
+        let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let provider = try #require(json["provider"] as? [String: Any])
+        #expect(provider["zdr"] as? Bool == true)
+        #expect(provider.count == 1)
     }
 }

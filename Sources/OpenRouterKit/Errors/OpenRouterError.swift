@@ -13,6 +13,34 @@ package struct ErrorResponse: Decodable {
         package let code: Int
         package let message: String
         package let metadata: [String: String]?
+
+        enum CodingKeys: String, CodingKey {
+            case code
+            case message
+            case metadata
+        }
+
+        package init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.code = try container.decode(Int.self, forKey: .code)
+            self.message = try container.decode(String.self, forKey: .message)
+            // Metadata values are arbitrary JSON (`raw`, `reasons`), so non-strings are kept as compact JSON text.
+            let values = try container.decodeIfPresent([String: JSONValue].self, forKey: .metadata)
+            self.metadata = values?.compactMapValues(Self.metadataString)
+        }
+
+        private static func metadataString(_ value: JSONValue) -> String? {
+            switch value {
+            case .string(let string):
+                return string
+            case .null:
+                return nil
+            default:
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+                return (try? encoder.encode(value)).flatMap { String(bytes: $0, encoding: .utf8) }
+            }
+        }
     }
     package let error: ErrorDetail
 }
@@ -28,7 +56,10 @@ public struct OpenRouterError: Error {
     /// Human-readable error message
     public let message: String
 
-    /// Optional metadata associated with the error
+    /// Optional metadata associated with the error, such as `provider_name`.
+    ///
+    /// String values are passed through as-is. Other JSON values (for example
+    /// `raw` or `reasons`) are rendered as compact JSON text; `null` values are omitted.
     public let metadata: [String: String]?
 
     /// Raw HTTP response body returned by the server when the structured error

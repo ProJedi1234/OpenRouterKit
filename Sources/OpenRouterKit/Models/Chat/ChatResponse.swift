@@ -20,6 +20,9 @@ public struct ChatResponse: Codable, Sendable {
     /// Model identifier used for the completion.
     public var model: String
 
+    /// Name of the upstream provider that served the request, for example `Groq` or `Cerebras`.
+    public var provider: String?
+
     /// Token usage statistics.
     public var usage: Usage?
 

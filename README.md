@@ -370,6 +370,8 @@ provider: ProviderPreferences(only: ["azure"], allowFallbacks: false)
 
 Advanced `sort` with `partition: .none` sorts endpoints globally across model fallbacks (see [OpenRouter provider routing](https://openrouter.ai/docs/guides/routing/provider-selection)). Model slug shortcuts `:nitro` (throughput) and `:floor` (price) are equivalent to setting `sort` without using `ProviderPreferences`.
 
+To see which provider actually served a chat completion, read `response.provider` (for example `"Groq"`). It is `nil` when OpenRouter omits it. On failures, `OpenRouterError.metadata?["provider_name"]` carries the provider when OpenRouter reports one.
+
 ## Multi-Model Routing
 
 Specify fallback models so the request automatically tries alternatives:
@@ -466,6 +468,8 @@ do {
     }
 }
 ```
+
+`error.metadata` holds OpenRouter's `error.metadata` as strings. String values pass through unchanged, and structured values such as `raw` or `reasons` arrive as compact JSON text.
 
 ## Migration Notes
 

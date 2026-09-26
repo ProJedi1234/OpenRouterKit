@@ -90,6 +90,59 @@ struct OpenRouterErrorTests {
         }
     }
 
+    @Test func providerErrorWithObjectRawMetadataDecodes() throws {
+        let json = """
+        {
+          "error": {
+            "code": 403,
+            "message": "Provider refused the request",
+            "metadata": {
+              "provider_name": "Anthropic",
+              "provider_code": "permission_error",
+              "error_type": "refusal",
+              "raw": {"type": "error", "error": {"type": "permission_error", "retryable": false}},
+              "attempt": 2,
+              "cached": null
+            }
+          }
+        }
+        """
+        let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: Data(json.utf8))
+        let error = OpenRouterError(httpStatusCode: 403, errorResponse: errorResponse, rawBody: json)
+
+        #expect(error.message == "Provider refused the request")
+        #expect(error.rawResponseBody == nil)
+        #expect(error.metadata?["provider_name"] == "Anthropic")
+        #expect(error.metadata?["provider_code"] == "permission_error")
+        #expect(error.metadata?["raw"] == #"{"error":{"retryable":false,"type":"permission_error"},"type":"error"}"#)
+        #expect(error.metadata?["attempt"] == "2")
+        #expect(error.metadata?.keys.contains("cached") == false)
+    }
+
+    @Test func moderationErrorWithArrayMetadataDecodes() throws {
+        let json = """
+        {
+          "error": {
+            "code": 403,
+            "message": "Input was flagged",
+            "metadata": {
+              "reasons": ["harassment", "violence"],
+              "flagged_input": "some text",
+              "provider_name": "OpenAI",
+              "model_slug": "openai/gpt-4o"
+            }
+          }
+        }
+        """
+        let errorResponse = try JSONDecoder().decode(ErrorResponse.self, from: Data(json.utf8))
+        let error = OpenRouterError(httpStatusCode: 403, errorResponse: errorResponse)
+
+        #expect(error.message == "Input was flagged")
+        #expect(error.metadata?["provider_name"] == "OpenAI")
+        #expect(error.metadata?["reasons"] == #"["harassment","violence"]"#)
+        #expect(error.metadata?["flagged_input"] == "some text")
+    }
+
     @Test func statusCodeMappingRateLimited() throws {
         let errorResponse = try makeErrorResponse(message: "Too many requests", code: 429)
         let error = OpenRouterError(httpStatusCode: 429, errorResponse: errorResponse)

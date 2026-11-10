@@ -73,7 +73,7 @@ struct NIOClientTests {
             case .finished(let reason, _):
                 gotFinished = true
                 #expect(reason == "stop", "Finish reason should be 'stop'")
-            case .audio:
+            case .audio, .annotations:
                 break
             case .toolCallDelta:
                 break
@@ -91,5 +91,53 @@ struct NIOClientTests {
 
         let firstModel = try #require(response.data.first, "Models list should not be empty")
         #expect(!firstModel.id.isEmpty, "Model id should not be empty")
+    }
+}
+
+extension NIOClientTests {
+    @Test func testNIOStreamServerToolWithFunctionTool() async throws {
+        let weatherTool = Tool(function: FunctionDescription(
+            name: "get_weather",
+            description: "Get the current weather for a city.",
+            parameters: .object([
+                "type": .string("object"),
+                "properties": .object(["location": .object(["type": .string("string")])]),
+                "required": .array([.string("location")])
+            ])
+        ))
+        let request = ChatRequest(
+            messages: [Message(role: .user, content: .string(
+                "First search the web for which city hosted the 2024 Summer Olympics, then call get_weather for that city."
+            ))],
+            model: "openai/gpt-5-mini",
+            tools: [.webSearch(WebSearchParameters(engine: .exa, maxResults: 1)), weatherTool]
+        )
+
+        var accumulator = ToolCallAccumulator()
+        var citations: [Annotation] = []
+        var webSearchRequests = 0
+        var finishReason: String?
+
+        for try await event in try await client.chat.streamEvents(request: request) {
+            switch event {
+            case .annotations(let annotations):
+                citations += annotations
+            case .toolCallDelta(let delta):
+                accumulator.accumulate(delta)
+            case .finished(let reason, let usage):
+                finishReason = reason ?? finishReason
+                webSearchRequests = max(webSearchRequests, usage?.server_tool_use_details?.web_search_requests ?? 0)
+            case .text, .audio:
+                break
+            }
+        }
+
+        #expect(citations.contains { $0.urlCitation?.url?.isEmpty == false }, "Should stream url_citation annotations")
+        #expect(webSearchRequests >= 1, "Usage should count the web search")
+        #expect(accumulator.toolCalls.allSatisfy { $0.function.name == "get_weather" },
+                "Server tool calls should never surface as function tool calls")
+        if finishReason == "tool_calls" {
+            #expect(accumulator.toolCalls.count >= 1)
+        }
     }
 }

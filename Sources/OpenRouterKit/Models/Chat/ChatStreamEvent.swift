@@ -15,6 +15,7 @@ import Foundation
 /// Example:
 /// ```swift
 /// var accumulator = ToolCallAccumulator()
+/// var citations: [Annotation] = []
 /// for try await event in try await client.chat.streamEvents(request: request) {
 ///     switch event {
 ///     case .text(let text):
@@ -23,6 +24,8 @@ import Foundation
 ///         print(audio.transcript ?? "", terminator: "")
 ///     case .toolCallDelta(let delta):
 ///         accumulator.accumulate(delta)
+///     case .annotations(let annotations):
+///         citations.append(contentsOf: annotations)
 ///     case .finished(let reason, let usage):
 ///         if reason == "tool_calls" {
 ///             let toolCalls = accumulator.toolCalls
@@ -40,6 +43,10 @@ public enum ChatStreamEvent: Sendable {
     /// An incremental tool call delta. Accumulate these with ``ToolCallAccumulator``
     /// to reassemble complete ``ToolCall`` objects.
     case toolCallDelta(ToolCallDelta)
+
+    /// Annotations on the assistant message, such as web search citations from server tools.
+    /// A stream may emit several of these; each carries only the annotations in its chunk.
+    case annotations([Annotation])
 
     /// The stream has finished. Includes the finish reason and optional token usage.
     case finished(finishReason: String?, usage: StreamingDelta.Usage?)

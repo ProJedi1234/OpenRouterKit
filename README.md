@@ -14,6 +14,7 @@ An unofficial Swift SDK for the [OpenRouter](https://openrouter.ai/docs/quicksta
 - **Streaming** — real-time token-by-token text streaming and structured event streaming (Apple platforms)
 - **Tool Calling** — define tools, handle model-initiated function calls, and send results back
 - **Streaming Tool Calls** — reassemble incremental tool call deltas with `ToolCallAccumulator`
+- **Server Tools** — give the model OpenRouter-run tools such as web search, with citations and usage counts
 - **Image Inputs** — send images via URL or base64 alongside text in multi-part messages
 - **Audio Inputs and Outputs** — send `input_audio` content and stream audio deltas
 - **Structured Outputs** — request JSON-formatted responses from models
@@ -192,6 +193,9 @@ for try await event in events {
     case .toolCallDelta(let delta):
         // handle incremental tool call data
         break
+    case .annotations(let annotations):
+        // citations from server tools such as web search
+        break
     case .finished(let reason, let usage):
         print("\nDone: \(reason ?? "unknown")")
     }
@@ -265,7 +269,7 @@ for try await event in events {
         print(text, terminator: "")
     case .toolCallDelta(let delta):
         accumulator.accumulate(delta)
-    case .audio:
+    case .audio, .annotations:
         break
     case .finished(let reason, _):
         if reason == "tool_calls" {
@@ -275,6 +279,38 @@ for try await event in events {
     }
 }
 ```
+
+### Server Tools
+
+Server tools run on OpenRouter's side, so the model can search the web or check the time without a round trip through your code. Mix them freely with function tools:
+
+```swift
+let request = ChatRequest(
+    messages: [Message(role: .user, content: .string("What's new in the latest Swift release?"))],
+    model: "openai/gpt-5-mini",
+    tools: [
+        .webSearch(WebSearchParameters(engine: .exa, maxResults: 3)),
+        .serverTool(type: "openrouter:datetime"),
+        weatherTool
+    ]
+)
+
+let response = try await client.chat.send(request: request)
+let message = response.choices[0].message
+for citation in message.annotations?.compactMap(\.urlCitation) ?? [] {
+    print(citation.title ?? "", citation.url ?? "")
+}
+print(response.usage?.server_tool_use_details?.web_search_requests ?? 0)
+```
+
+`WebSearchParameters` covers `engine`, `mode`, `maxResults`, `maxUses`, `maxTotalResults`, `searchContextSize`, `maxCharacters`, `userLocation`, `allowedDomains`, and `excludedDomains`. Every other server tool, such as `openrouter:web_fetch` or `openrouter:image_generation`, goes through `.serverTool(type:parameters:)` with a raw `JSONValue` parameters object.
+
+Server tools behave differently from function tools in a response:
+
+- Server tool calls never appear in `tool_calls`, and they do not set `finish_reason` to `"tool_calls"`. Only function tool calls do.
+- `usage.server_tool_use_details` is the only record of them, with counts such as `web_search_requests`, `tool_calls_requested`, and `tool_calls_executed`.
+- Web search citations arrive as `url_citation` annotations, on `message.annotations` without streaming and as `.annotations` events when streaming. Each carries a `url` and `title`. Depending on the engine, it may also carry a `content` excerpt or start and end indices into the message text.
+- When streaming a mixed request, a function call that follows a server tool call can arrive at index 1 with no index 0. `ToolCallAccumulator` handles the gap.
 
 ## Image Inputs
 
@@ -472,6 +508,11 @@ do {
 `error.metadata` holds OpenRouter's `error.metadata` as strings. String values pass through unchanged, and structured values such as `raw` or `reasons` arrive as compact JSON text.
 
 ## Migration Notes
+
+### Server Tools (0.8.0)
+
+- **`Tool.function`** is now optional, because server tools have no function. `Tool(function:)` still compiles unchanged; code that reads `tool.function.name` becomes `tool.function?.name`.
+- **`ChatStreamEvent`** has a new `.annotations([Annotation])` case. Exhaustive `switch` statements over stream events need a case for it, or a `default`.
 
 ### Custom Protocol Conformers
 

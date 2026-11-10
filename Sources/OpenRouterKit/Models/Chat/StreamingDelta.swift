@@ -60,11 +60,15 @@ public struct StreamingDelta: Codable {
             /// Audio delta for audio-output-capable models.
             public var audio: AudioDelta?
 
+            /// Annotations attached to this chunk, such as web search citations.
+            public var annotations: [Annotation]?
+
             enum CodingKeys: String, CodingKey {
                 case role
                 case content
                 case toolCalls = "tool_calls"
                 case audio
+                case annotations
             }
         }
     }
@@ -91,6 +95,9 @@ public struct StreamingDelta: Codable {
 
         /// Detailed breakdown of prompt tokens.
         public var prompt_tokens_details: ChatResponse.Usage.PromptTokensDetails?
+
+        /// Counts of server tool calls made during the request.
+        public var server_tool_use_details: ChatResponse.Usage.ServerToolUseDetails?
 
     }
 }

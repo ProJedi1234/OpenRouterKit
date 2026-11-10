@@ -62,6 +62,10 @@ package enum SSEParser {
                 events.append(.audio(audio))
             }
 
+            if let annotations = choice.delta.annotations, !annotations.isEmpty {
+                events.append(.annotations(annotations))
+            }
+
             if let finishReason = choice.finish_reason {
                 events.append(.finished(finishReason: finishReason, usage: delta.usage))
             }

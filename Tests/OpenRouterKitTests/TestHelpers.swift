@@ -12,3 +12,6 @@ let isDarwin = true
 #else
 let isDarwin = false
 #endif
+
+/// Model for live integration tests. It needs tool calling and ZDR endpoints with no safety retention.
+let integrationTestModel = "z-ai/glm-5.3-flash"

@@ -134,7 +134,7 @@ struct UsageCostIntegrationTests {
     func chatCompletionIncludesUsageCost() async throws {
         let request = OpenRouterRequest(
             messages: [Message(role: .user, content: .string("Reply with one word: ok"))],
-            model: "openai/gpt-4.1-mini",
+            model: integrationTestModel,
             maxTokens: 5
         )
 

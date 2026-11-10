@@ -11,6 +11,9 @@ import Testing
 import Foundation
 import OpenRouterKitNIO
 
+/// Mirrors `integrationTestModel` in OpenRouterKitTests; test targets cannot share a helper file.
+private let integrationTestModel = "z-ai/glm-5.3-flash"
+
 @Suite("NIO Client",
        .enabled(if: ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"]?.isEmpty == false))
 struct NIOClientTests {
@@ -30,7 +33,7 @@ struct NIOClientTests {
             .init(role: .user, content: .string("Tell me a joke"))
         ]
 
-        let request = ChatRequest(messages: messages, model: "openai/gpt-4.1-mini")
+        let request = ChatRequest(messages: messages, model: integrationTestModel)
         let response = try await client.chat.send(request: request)
 
         let choice = try #require(response.choices.first, "Response should contain at least one choice")
@@ -43,7 +46,7 @@ struct NIOClientTests {
         var streamedResponse = ""
         var chunkCount = 0
 
-        let request = ChatRequest(messages: messages, model: "openai/gpt-4.1-mini", stream: true)
+        let request = ChatRequest(messages: messages, model: integrationTestModel, stream: true)
         let stream = try await client.chat.stream(request: request)
 
         for try await text in stream {
@@ -63,7 +66,7 @@ struct NIOClientTests {
         var textContent = ""
         var gotFinished = false
 
-        let request = ChatRequest(messages: messages, model: "openai/gpt-4.1-mini", stream: true)
+        let request = ChatRequest(messages: messages, model: integrationTestModel, stream: true)
         let stream = try await client.chat.streamEvents(request: request)
 
         for try await event in stream {

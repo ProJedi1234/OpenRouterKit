@@ -208,7 +208,7 @@ struct ReasoningIntegrationTests {
 
         let request = OpenRouterRequest(
             messages: messages,
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             maxTokens: 1000,
             reasoning: ReasoningConfiguration(effort: .minimal)
         )
@@ -240,7 +240,7 @@ struct ReasoningIntegrationTests {
 
         let request = OpenRouterRequest(
             messages: messages,
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             maxTokens: 1500,
             reasoning: ReasoningConfiguration(effort: .high)
         )
@@ -273,7 +273,7 @@ struct ReasoningIntegrationTests {
 
         let request = OpenRouterRequest(
             messages: messages,
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             stream: true,
             maxTokens: 1000,
             reasoning: ReasoningConfiguration(effort: .medium)
@@ -314,7 +314,7 @@ struct ReasoningIntegrationTests {
 
             let request = OpenRouterRequest(
                 messages: messages,
-                model: "google/gemini-3-flash-preview",
+                model: "openai/gpt-4.1-mini",
                 maxTokens: 500,
                 reasoning: ReasoningConfiguration(effort: effort)
             )
@@ -343,7 +343,7 @@ struct ReasoningIntegrationTests {
 
         let request = OpenRouterRequest(
             messages: messages,
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             maxTokens: 100
             // No reasoning parameter
         )

@@ -456,7 +456,7 @@ struct ChatRequestParametersIntegrationTests {
     func testMaxCompletionTokens() async throws {
         let request = ChatRequest(
             messages: [Message(role: .user, content: .string("Say hello."))],
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             maxCompletionTokens: 50
         )
 
@@ -475,7 +475,7 @@ struct ChatRequestParametersIntegrationTests {
     func testUserIdentifier() async throws {
         let request = ChatRequest(
             messages: [Message(role: .user, content: .string("Say hi."))],
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             maxCompletionTokens: 20,
             user: "test-user-123"
         )
@@ -489,7 +489,7 @@ struct ChatRequestParametersIntegrationTests {
     func testMetadataAndSessionId() async throws {
         let request = ChatRequest(
             messages: [Message(role: .user, content: .string("Say ok."))],
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             maxCompletionTokens: 10,
             metadata: ["env": "test"],
             sessionId: "test-session-001"
@@ -504,7 +504,7 @@ struct ChatRequestParametersIntegrationTests {
     func testStreamingWithUsage() async throws {
         let request = ChatRequest(
             messages: [Message(role: .user, content: .string("Count to 3."))],
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             stream: true,
             maxCompletionTokens: 50,
             streamOptions: StreamOptions(includeUsage: true)
@@ -554,7 +554,7 @@ struct ChatRequestParametersIntegrationTests {
             messages: [
                 Message(role: .user, content: .string("What's the weather in NYC and London? Use the tool for each."))
             ],
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             tools: [weatherTool],
             toolChoice: .required,
             maxCompletionTokens: 200,

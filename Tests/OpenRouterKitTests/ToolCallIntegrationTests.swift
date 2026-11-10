@@ -64,7 +64,7 @@ struct ToolCallIntegrationTests {
             messages: [
                 Message(role: .user, content: .string(Fixtures.weatherUserPrompt))
             ],
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             maxTokens: 1000,
             tools: [weatherTool],
             toolChoice: .auto
@@ -111,7 +111,7 @@ struct ToolCallIntegrationTests {
 
             let followUpRequest = ChatRequest(
                 messages: conversationMessages,
-                model: "google/gemini-3-flash-preview",
+                model: "openai/gpt-4.1-mini",
                 maxTokens: 1000,
                 tools: [weatherTool]
             )
@@ -155,7 +155,7 @@ struct ToolCallIntegrationTests {
             messages: [
                 Message(role: .user, content: .string("What is 2 + 2?"))
             ],
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             maxTokens: 500,
             tools: [mathTool],
             toolChoice: .required
@@ -201,7 +201,7 @@ struct ToolCallIntegrationTests {
             messages: [
                 Message(role: .user, content: .string("What is the weather in Tokyo? Use the get_weather tool."))
             ],
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             maxTokens: 500,
             tools: [weatherTool],
             toolChoice: .required
@@ -264,7 +264,7 @@ struct ToolCallIntegrationTests {
             messages: [
                 Message(role: .user, content: .string("What is the weather in both Tokyo and New York? Use the get_weather tool for each city."))
             ],
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             maxTokens: 500,
             tools: [weatherTool],
             toolChoice: .required

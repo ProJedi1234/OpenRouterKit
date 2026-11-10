@@ -94,7 +94,7 @@ struct ChatResponseProviderIntegrationTests {
     func chatCompletionIncludesProvider() async throws {
         let request = OpenRouterRequest(
             messages: [Message(role: .user, content: .string("Reply with one word: ok"))],
-            model: "google/gemini-3-flash-preview",
+            model: "openai/gpt-4.1-mini",
             maxTokens: 5
         )
 

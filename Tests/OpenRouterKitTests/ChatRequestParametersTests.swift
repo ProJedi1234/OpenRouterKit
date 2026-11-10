@@ -454,10 +454,14 @@ struct ChatRequestParametersIntegrationTests {
 
     @Test("Request with maxCompletionTokens")
     func testMaxCompletionTokens() async throws {
+        // Reasoning tokens count toward the cap, and the model cannot turn reasoning off,
+        // so a tight cap can be spent entirely on reasoning and leave no content.
+        let cap = 400
         let request = ChatRequest(
             messages: [Message(role: .user, content: .string("Say hello."))],
             model: integrationTestModel,
-            maxCompletionTokens: 50
+            reasoning: ReasoningConfiguration(effort: .minimal),
+            maxCompletionTokens: cap
         )
 
         let response = try await client.chat.send(request: request)
@@ -466,7 +470,7 @@ struct ChatRequestParametersIntegrationTests {
         #expect(choice.message.content?.isEmpty == false)
         // Verify token usage is within our limit
         if let usage = response.usage {
-            #expect(usage.completion_tokens <= 50,
+            #expect(usage.completion_tokens <= cap,
                    "Completion tokens (\(usage.completion_tokens)) should respect maxCompletionTokens limit")
         }
     }

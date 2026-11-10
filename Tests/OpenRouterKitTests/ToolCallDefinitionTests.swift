@@ -119,8 +119,8 @@ struct ToolCallDefinitionTests {
         let tool = try JSONDecoder().decode(Tool.self, from: data)
 
         #expect(tool.type == "function")
-        #expect(tool.function.name == "search_books")
-        #expect(tool.function.description == "Search for books")
+        #expect(tool.function?.name == "search_books")
+        #expect(tool.function?.description == "Search for books")
     }
 
     // MARK: - ToolChoice Tests

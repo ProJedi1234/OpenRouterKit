@@ -50,11 +50,15 @@ public struct ChatResponse: Codable, Sendable {
             /// Generated audio payload, when returned by audio-capable models.
             public var audio: ChatCompletionAudio?
 
+            /// Annotations on the message, such as web search citations.
+            public var annotations: [Annotation]?
+
             enum CodingKeys: String, CodingKey {
                 case role
                 case content
                 case toolCalls = "tool_calls"
                 case audio
+                case annotations
             }
         }
     }
@@ -81,6 +85,24 @@ public struct ChatResponse: Codable, Sendable {
 
         /// Detailed breakdown of prompt tokens.
         public var prompt_tokens_details: PromptTokensDetails?
+
+        /// Counts of server tool calls made during the request.
+        public var server_tool_use_details: ServerToolUseDetails?
+
+        /// Counts of server tool calls, such as `openrouter:web_search`, made during the request.
+        ///
+        /// Server tool calls run on OpenRouter's side and never appear in `tool_calls`,
+        /// so this is the only record of them in the response.
+        public struct ServerToolUseDetails: Codable, Sendable {
+            /// Number of web searches run.
+            public var web_search_requests: Int?
+
+            /// Number of server tool calls the model requested.
+            public var tool_calls_requested: Int?
+
+            /// Number of server tool calls OpenRouter executed.
+            public var tool_calls_executed: Int?
+        }
 
         /// Detailed breakdown of output tokens.
         public struct OutputTokensDetails: Codable, Sendable {

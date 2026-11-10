@@ -522,7 +522,7 @@ struct ChatRequestParametersIntegrationTests {
                 chunkCount += 1
             case .finished(_, let usage):
                 if let usage { receivedUsage = usage }
-            case .audio, .toolCallDelta:
+            case .audio, .toolCallDelta, .annotations:
                 break
             }
         }

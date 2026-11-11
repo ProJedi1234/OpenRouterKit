@@ -34,7 +34,7 @@ struct OpenRouterClientTests {
             .init(role: .user, content: .string("Tell me a joke"))
         ]
 
-        let request = OpenRouterRequest(messages: messages, model: "openai/gpt-4.1-mini")
+        let request = OpenRouterRequest(messages: messages, model: integrationTestModel)
         let response = try await client.chat.send(request: request)
 
         let choice = try #require(response.choices.first, "Response should contain at least one choice")
@@ -65,7 +65,7 @@ struct OpenRouterClientTests {
         var streamedResponse = ""
         var chunkCount = 0
 
-        let request = OpenRouterRequest(messages: messages, model: "openai/gpt-4.1-mini", stream: true)
+        let request = OpenRouterRequest(messages: messages, model: integrationTestModel, stream: true)
         let stream = try await client.chat.stream(request: request)
 
         for try await text in stream {
@@ -84,7 +84,7 @@ struct OpenRouterClientTests {
     func testStreamEventsIncludesUsage() async throws {
         let request = OpenRouterRequest(
             messages: [Message(role: .user, content: .string("Say hi"))],
-            model: "openai/gpt-4.1-mini",
+            model: integrationTestModel,
             stream: true,
             maxTokens: 5
         )
@@ -128,7 +128,7 @@ struct OpenRouterClientTests {
             messages: [
                 Message(role: .user, content: .string("What is the weather in Tokyo? Use the get_weather tool."))
             ],
-            model: "openai/gpt-4.1-mini",
+            model: integrationTestModel,
             maxTokens: 500,
             tools: [weatherTool],
             toolChoice: .required

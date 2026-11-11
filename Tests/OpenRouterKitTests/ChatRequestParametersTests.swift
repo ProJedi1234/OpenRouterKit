@@ -454,10 +454,13 @@ struct ChatRequestParametersIntegrationTests {
 
     @Test("Request with maxCompletionTokens")
     func testMaxCompletionTokens() async throws {
+        // Reasoning tokens count toward the cap, so turn reasoning off to leave room for content.
+        let cap = 50
         let request = ChatRequest(
             messages: [Message(role: .user, content: .string("Say hello."))],
-            model: "openai/gpt-4.1-mini",
-            maxCompletionTokens: 50
+            model: integrationTestModel,
+            reasoning: ReasoningConfiguration(effort: .none),
+            maxCompletionTokens: cap
         )
 
         let response = try await client.chat.send(request: request)
@@ -466,7 +469,7 @@ struct ChatRequestParametersIntegrationTests {
         #expect(choice.message.content?.isEmpty == false)
         // Verify token usage is within our limit
         if let usage = response.usage {
-            #expect(usage.completion_tokens <= 50,
+            #expect(usage.completion_tokens <= cap,
                    "Completion tokens (\(usage.completion_tokens)) should respect maxCompletionTokens limit")
         }
     }
@@ -475,7 +478,8 @@ struct ChatRequestParametersIntegrationTests {
     func testUserIdentifier() async throws {
         let request = ChatRequest(
             messages: [Message(role: .user, content: .string("Say hi."))],
-            model: "openai/gpt-4.1-mini",
+            model: integrationTestModel,
+            reasoning: ReasoningConfiguration(effort: .none),
             maxCompletionTokens: 20,
             user: "test-user-123"
         )
@@ -489,7 +493,8 @@ struct ChatRequestParametersIntegrationTests {
     func testMetadataAndSessionId() async throws {
         let request = ChatRequest(
             messages: [Message(role: .user, content: .string("Say ok."))],
-            model: "openai/gpt-4.1-mini",
+            model: integrationTestModel,
+            reasoning: ReasoningConfiguration(effort: .none),
             maxCompletionTokens: 10,
             metadata: ["env": "test"],
             sessionId: "test-session-001"
@@ -504,8 +509,9 @@ struct ChatRequestParametersIntegrationTests {
     func testStreamingWithUsage() async throws {
         let request = ChatRequest(
             messages: [Message(role: .user, content: .string("Count to 3."))],
-            model: "openai/gpt-4.1-mini",
+            model: integrationTestModel,
             stream: true,
+            reasoning: ReasoningConfiguration(effort: .none),
             maxCompletionTokens: 50,
             streamOptions: StreamOptions(includeUsage: true)
         )
@@ -554,9 +560,10 @@ struct ChatRequestParametersIntegrationTests {
             messages: [
                 Message(role: .user, content: .string("What's the weather in NYC and London? Use the tool for each."))
             ],
-            model: "openai/gpt-4.1-mini",
+            model: integrationTestModel,
             tools: [weatherTool],
             toolChoice: .required,
+            reasoning: ReasoningConfiguration(effort: .none),
             maxCompletionTokens: 200,
             parallelToolCalls: true
         )

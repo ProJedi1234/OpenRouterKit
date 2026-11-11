@@ -112,7 +112,7 @@ extension NIOClientTests {
             messages: [Message(role: .user, content: .string(
                 "First search the web for which city hosted the 2024 Summer Olympics, then call get_weather for that city."
             ))],
-            model: "openai/gpt-5-mini",
+            model: integrationTestModel,
             tools: [.webSearch(WebSearchParameters(engine: .exa, maxResults: 1)), weatherTool]
         )
 

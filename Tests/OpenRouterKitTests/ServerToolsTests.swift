@@ -260,7 +260,7 @@ struct ServerToolsIntegrationTests {
             messages: [Message(role: .user, content: .string(
                 "Search the web for the city that hosted the 2024 Summer Olympics. Answer in one sentence."
             ))],
-            model: "openai/gpt-5-mini",
+            model: integrationTestModel,
             tools: [.webSearch(WebSearchParameters(engine: .exa, maxResults: 1))]
         )
         let response = try await client.chat.send(request: request)

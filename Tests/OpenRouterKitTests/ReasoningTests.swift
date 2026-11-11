@@ -298,13 +298,13 @@ struct ReasoningIntegrationTests {
 
     @Test("Test all reasoning effort levels")
     func testAllReasoningEffortLevelsAPI() async throws {
-        // No `.none`: GLM 5.3 Flash endpoints reject disabling reasoning. Its encoding is covered offline.
         let efforts: [(ReasoningEffort, String)] = [
             (.xhigh, "xhigh"),
             (.high, "high"),
             (.medium, "medium"),
             (.low, "low"),
-            (.minimal, "minimal")
+            (.minimal, "minimal"),
+            (.none, "none")
         ]
 
         for (effort, name) in efforts {

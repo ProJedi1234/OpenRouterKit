@@ -12,7 +12,7 @@ import Foundation
 import OpenRouterKitNIO
 
 /// Mirrors `integrationTestModel` in OpenRouterKitTests; test targets cannot share a helper file.
-private let integrationTestModel = "z-ai/glm-5.3-flash"
+private let integrationTestModel = "~deepseek/deepseek-flash-latest"
 
 @Suite("NIO Client",
        .enabled(if: ProcessInfo.processInfo.environment["OPENROUTER_API_KEY"]?.isEmpty == false))

@@ -479,6 +479,7 @@ struct ChatRequestParametersIntegrationTests {
         let request = ChatRequest(
             messages: [Message(role: .user, content: .string("Say hi."))],
             model: integrationTestModel,
+            reasoning: ReasoningConfiguration(effort: .none),
             maxCompletionTokens: 20,
             user: "test-user-123"
         )
@@ -493,6 +494,7 @@ struct ChatRequestParametersIntegrationTests {
         let request = ChatRequest(
             messages: [Message(role: .user, content: .string("Say ok."))],
             model: integrationTestModel,
+            reasoning: ReasoningConfiguration(effort: .none),
             maxCompletionTokens: 10,
             metadata: ["env": "test"],
             sessionId: "test-session-001"
@@ -509,6 +511,7 @@ struct ChatRequestParametersIntegrationTests {
             messages: [Message(role: .user, content: .string("Count to 3."))],
             model: integrationTestModel,
             stream: true,
+            reasoning: ReasoningConfiguration(effort: .none),
             maxCompletionTokens: 50,
             streamOptions: StreamOptions(includeUsage: true)
         )
@@ -560,6 +563,7 @@ struct ChatRequestParametersIntegrationTests {
             model: integrationTestModel,
             tools: [weatherTool],
             toolChoice: .required,
+            reasoning: ReasoningConfiguration(effort: .none),
             maxCompletionTokens: 200,
             parallelToolCalls: true
         )

@@ -344,7 +344,8 @@ struct ReasoningIntegrationTests {
         let request = OpenRouterRequest(
             messages: messages,
             model: integrationTestModel,
-            maxTokens: 100
+            // The model reasons by default, which can use about 100 tokens before any content.
+            maxTokens: 500
             // No reasoning parameter
         )
 
